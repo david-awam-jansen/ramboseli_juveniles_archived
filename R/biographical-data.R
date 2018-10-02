@@ -24,6 +24,8 @@ subset_members <- function(babase) {
   groups_history <- dplyr::tbl(babase, "groups_history")
   behave_gaps <- dplyr::tbl(babase, "behave_gaps")
   members <- dplyr::tbl(babase, "members")
+  
+  message("All data has been downloaded...")
 
   md_females <- maturedates %>%
     dplyr::semi_join(dplyr::filter(biograph, sex == "F"), by = "sname")
@@ -31,7 +33,7 @@ subset_members <- function(babase) {
   rd_males <- rankdates %>%
     dplyr::semi_join(dplyr::filter(biograph, sex == "M"), by = "sname")
 
-
+   
   # For each animal/year-of-life, find all groups that the animal was a member of
   # members-query -----------------------------------------------------------
 
