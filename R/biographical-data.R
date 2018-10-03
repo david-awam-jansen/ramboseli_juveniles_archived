@@ -317,18 +317,33 @@ subset_interactions <- function(babase, members_l, my_acts = NULL) {
     dplyr::left_join(dplyr::select(rankdates_l, sname, actee_ranked = ranked),
                      by = c("actee" = "sname"))
 
+  # inter <- inter %>%
+  #   dplyr::filter(((actor_sex == "F" & date >= actor_matured) |
+  #                    (actor_sex == "M" & date >= actor_ranked)) &
+  #                   ((actee_sex == "F" & date >= actee_matured) |
+  #                      (actee_sex == "M" & date >= actee_ranked)))
+  
   inter <- inter %>%
-    dplyr::filter(((actor_sex == "F" & date >= actor_matured) |
-                     (actor_sex == "M" & date >= actor_ranked)) &
-                    ((actee_sex == "F" & date >= actee_matured) |
-                       (actee_sex == "M" & date >= actee_ranked)))
+    dplyr::mutate(actor_age_class = dplyr::if_else(actor_sex == 'F', 
+                                             if_else(date >= actor_matured & !is.na(actor_matured), "adult", "juvenile"), 
+                                             if_else(actor_sex == 'M', 
+                                                if_else(date >= actor_ranked & !is.na(actor_ranked), "adult", 
+                                                if_else(date >= actor_matured & !is.na(actor_matured) & (date < actor_ranked | is.na(actor_ranked)), "subadult", "juvenile")),
+                                                    "An unknown sex"))) %>%
+  dplyr::mutate(actee_age_class = dplyr::if_else(actee_sex == 'F', 
+                                                 if_else(date >= actee_matured & !is.na(actee_matured), "adult", "juvenile"), 
+                                                 if_else(actee_sex == 'M', 
+                                                    if_else(date >= actee_ranked & !is.na(actee_ranked), "adult", 
+                                                    if_else(date >= actee_matured & !is.na(actee_matured) & (date < actee_ranked | is.na(actee_ranked)), "subadult", "juvenile")),
+                                                        "An unknown sex"))) 
+
 
 
   inter$yearmon <- as.character(zoo::as.yearmon(inter$date))
 
   inter <- inter %>%
     dplyr::select(iid, sid, act, actor, actee, actor_sex, actee_sex, date,
-                  yearmon, actor_grp, actee_grp)
+                  yearmon, actor_grp, actee_grp, actor_age_class, actee_age_class)
 
   # If user requested grooming data, deal with first-of-month issue
 
