@@ -508,7 +508,11 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
     dplyr::left_join(dplyr::select(rd_males, sname, ranked), by = "sname") %>%
     dplyr::select(sname, sex, birth, statdate, matured, ranked) %>%
     dplyr::collect()
-
+  
+  if(.adults_only == TRUE) message("The individual-year-of-life data set will only have data for adult matured females and adult ranked males")
+  if(.adults_only == FALSE) message("The individual-year-of-life data set will have data for everybody from birth")
+  if(.adults_only == FALSE) message("Code needs to be altered to allow for birth - matured/ranked, matured/ranked until statdate")
+  
   if (.adults_only) {
     iyol <- iyol %>%
       dplyr::mutate(first_start_date = dplyr::case_when(
