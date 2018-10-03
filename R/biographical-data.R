@@ -8,15 +8,15 @@
 #'
 #' @examples
 subset_members <- function(babase) {
-  
+
   if (class(babase) != "PostgreSQLConnection") {
     stop("Invalid connection to babase.")
   }
-  
+
   # babase-tables -----------------------------------------------------------
-  
+
   message("Creating connections to babase tables...")
-  
+
   # Database connections
   biograph <- dplyr::tbl(babase, "biograph")
   maturedates <- dplyr::tbl(babase, "maturedates")
@@ -26,19 +26,19 @@ subset_members <- function(babase) {
   members <- dplyr::tbl(babase, "members")
   
   message("All data has been downloaded...")
-  
+
   md_individuals <- maturedates %>%
     dplyr::semi_join(dplyr::filter(biograph), by = "sname")
-  
+
   rd_males <- rankdates %>%
     dplyr::semi_join(dplyr::filter(biograph, sex == "M"), by = "sname")
-  
-  
+
+   
   # For each animal/year-of-life, find all groups that the animal was a member of
   # members-query -----------------------------------------------------------
-  
+
   message("Obtaining members data from all adult females (matured) and males (ranked)...")
-  
+
   members_keep <- members %>%
     dplyr::inner_join(dplyr::select(biograph, sname, sex), by = "sname") %>%
     dplyr::left_join(dplyr::select(md_individuals, sname, matured), by = "sname") %>%
@@ -53,14 +53,14 @@ subset_members <- function(babase) {
   bg <- members_keep %>%
     dplyr::left_join(behave_gaps, by = "grp") %>%
     dplyr::filter(date >= gap_start & date <= gap_end)
-  
+
   # Exclude those records using anti_join
   members_keep <- dplyr::anti_join(members_keep, bg, by = "membid") %>%
     dplyr::select(grp, sname, date, sex, matured, ranked) %>%
     dplyr::mutate(check = "keep")
-  
+
   message("Dealing with first-of-month issue...")
-  
+
   # Second part
   members_remove <- members %>%
     dplyr::inner_join(dplyr::select(biograph, sname, sex), by = "sname") %>%
@@ -88,7 +88,7 @@ subset_members <- function(babase) {
   members_l <- members_l %>%
     dplyr::group_by(sname, yearmon) %>%
     dplyr::mutate(yearmon_num_grp = n_distinct(grp))
-  
+
   ## Check in what group an individual lives in on the first of the month.
   members_remove <- members_l %>% filter(check == "remove")
   
@@ -97,7 +97,7 @@ subset_members <- function(babase) {
     dplyr::inner_join(dplyr::select(members_remove, first_of_month_grp = grp, sname, yearmon),
                       by = c("sname", "yearmon")) %>%
     tidyr::drop_na(month_days_present)
-  
+
   ## Make a column with all the groups an individual lives in during each yearmon
   members_l <- members_l %>%
     dplyr::group_by(sname, yearmon) %>%
@@ -112,9 +112,10 @@ subset_members <- function(babase) {
                                              ifelse(sex == 'M', 
                                                     ## TRUE for male question
                                                     if_else(date >= ranked & !is.na(ranked), "adult", ifelse(date >= matured & !is.na(matured) & (date < ranked | is.na(ranked)), "subadult", "juvenile")),
-                                                    "An unknown sex")))
-  return(members_l)
+                                                  "An unknown sex")))
+    return(members_l)
 }
+
 
 #' Obtain a subset of focal samples that excludes behavioral observation gaps.
 #'
@@ -217,6 +218,7 @@ subset_females <- function(members_l) {
   ## Get a count of number of adult females per day in a grp
   females_l <- members_l %>%
     dplyr::filter(sex == "F") %>%
+    dplyr::filter(age_class == "adults") %>%
     dplyr::group_by(grp, date) %>%
     dplyr::summarise(nr_females = n()) %>%
     dplyr::ungroup()
