@@ -8,15 +8,15 @@
 #'
 #' @examples
 subset_members <- function(babase) {
-
+  
   if (class(babase) != "PostgreSQLConnection") {
     stop("Invalid connection to babase.")
   }
-
+  
   # babase-tables -----------------------------------------------------------
-
+  
   message("Creating connections to babase tables...")
-
+  
   # Database connections
   biograph <- dplyr::tbl(babase, "biograph")
   maturedates <- dplyr::tbl(babase, "maturedates")
@@ -26,90 +26,95 @@ subset_members <- function(babase) {
   members <- dplyr::tbl(babase, "members")
   
   message("All data has been downloaded...")
-
-  md_females <- maturedates %>%
-    dplyr::semi_join(dplyr::filter(biograph, sex == "F"), by = "sname")
-
+  
+  md_individuals <- maturedates %>%
+    dplyr::semi_join(dplyr::filter(biograph), by = "sname")
+  
   rd_males <- rankdates %>%
     dplyr::semi_join(dplyr::filter(biograph, sex == "M"), by = "sname")
-
-   
+  
+  
   # For each animal/year-of-life, find all groups that the animal was a member of
   # members-query -----------------------------------------------------------
-
+  
   message("Obtaining members data from all adult females (matured) and males (ranked)...")
-
+  
   members_keep <- members %>%
     dplyr::inner_join(dplyr::select(biograph, sname, sex), by = "sname") %>%
-    dplyr::left_join(dplyr::select(md_females, sname, matured), by = "sname") %>%
+    dplyr::left_join(dplyr::select(md_individuals, sname, matured), by = "sname") %>%
     dplyr::left_join(dplyr::select(rd_males, sname, ranked), by = "sname") %>%
     dplyr::inner_join(dplyr::select(groups_history, gid, permanent, impermanent, last_reg_census),
                       by = c("grp" = "gid")) %>%
     dplyr::filter(grp < 3 & grp != 1.3 & grp != 1.4 & date >= permanent &
                     (is.na(impermanent) | date <= impermanent) &
-                    (is.na(last_reg_census) | date <= last_reg_census) &
-                    ((sex == "F" & date >= matured) | (sex == "M" & date >= ranked)))
-
+                    (is.na(last_reg_census) | date <= last_reg_census))
+  
   # Find behavior gaps that overlap records in members_keep
   bg <- members_keep %>%
     dplyr::left_join(behave_gaps, by = "grp") %>%
     dplyr::filter(date >= gap_start & date <= gap_end)
-
+  
   # Exclude those records using anti_join
   members_keep <- dplyr::anti_join(members_keep, bg, by = "membid") %>%
     dplyr::select(grp, sname, date, sex, matured, ranked) %>%
-    dplyr::collect()
-
+    dplyr::mutate(check = "keep")
+  
   message("Dealing with first-of-month issue...")
-
+  
   # Second part
   members_remove <- members %>%
     dplyr::inner_join(dplyr::select(biograph, sname, sex), by = "sname") %>%
-    dplyr::left_join(dplyr::select(md_females, sname, matured), by = "sname") %>%
+    dplyr::left_join(dplyr::select(md_individuals, sname, matured), by = "sname") %>%
     dplyr::left_join(dplyr::select(rd_males, sname, ranked), by = "sname") %>%
     dplyr::select(grp, sname, date, sex, matured, ranked) %>%
-    dplyr::collect()
-
-  members_remove <- members_remove %>%
-    dplyr::filter(lubridate::day(date) == 1)
-
-
+    filter(date_part("day", date) == 1) %>%
+    dplyr::mutate(check = "remove")
+  
+  ##members_l <- dplyr::bind_rows(members_keep, members_remove)
+  members_combined <- members_keep %>% union_all(members_remove)
+  members_l <- collect(members_combined)
+  
   # members-data-manip ------------------------------------------------------
-
-  members_keep$yearmon <- as.character(zoo::as.yearmon(members_keep$date))
-  members_remove$yearmon <- as.character(zoo::as.yearmon(members_remove$date))
-
+  members_l$yearmon <- as.character(zoo::as.yearmon(members_l$date))
+  message("check if this can be done faster")
+  
   ## Check how many days an individual is present in a month
-  members_keep <- members_keep %>%
-    dplyr::group_by(sname, yearmon) %>%
+  members_l <- members_l %>%
+    dplyr::group_by(check, sname, yearmon) %>%
     dplyr::mutate(month_days_present = n())
-
-  members_keep$check <- "keep"
-  members_remove$check <- "remove"
-
-  members_l <- dplyr::bind_rows(members_keep, members_remove)
-
+  message("check if this is correct")
+  
   ## How many groups per month/year
   members_l <- members_l %>%
     dplyr::group_by(sname, yearmon) %>%
     dplyr::mutate(yearmon_num_grp = n_distinct(grp))
-
+  
   ## Check in what group an individual lives in on the first of the month.
+  members_remove <- members_l %>% filter(check == "remove")
+  
   members_l <- members_l %>%
     dplyr::ungroup() %>%
     dplyr::inner_join(dplyr::select(members_remove, first_of_month_grp = grp, sname, yearmon),
                       by = c("sname", "yearmon")) %>%
     tidyr::drop_na(month_days_present)
-
+  
   ## Make a column with all the groups an individual lives in during each yearmon
   members_l <- members_l %>%
     dplyr::group_by(sname, yearmon) %>%
     dplyr::mutate(grps = paste(sort(unique(grp)), collapse = " ")) %>%
     dplyr::ungroup()
-
+  
+  ## Make a column that indicates the age_class of an individual/
+  members_l <- members_l %>%
+    dplyr::mutate(age_class = dplyr::if_else(sex == 'F', 
+                                             if_else(date >= matured & !is.na(matured), "adult", "juvenile"), 
+                                             ## If not female then
+                                             ifelse(sex == 'M', 
+                                                    ## TRUE for male question
+                                                    if_else(date >= ranked & !is.na(ranked), "adult", ifelse(date >= matured & !is.na(matured) & (date < ranked | is.na(ranked)), "subadult", "juvenile")),
+                                                    "An unknown sex")))
   return(members_l)
 }
-
 
 #' Obtain a subset of focal samples that excludes behavioral observation gaps.
 #'
