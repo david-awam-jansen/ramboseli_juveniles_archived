@@ -218,7 +218,7 @@ subset_females <- function(members_l) {
   ## Get a count of number of adult females per day in a grp
   females_l <- members_l %>%
     dplyr::filter(sex == "F") %>%
-    dplyr::filter(age_class == "adults") %>%
+    dplyr::filter(age_class == "adult") %>%
     dplyr::group_by(grp, date) %>%
     dplyr::summarise(nr_females = n()) %>%
     dplyr::ungroup()
