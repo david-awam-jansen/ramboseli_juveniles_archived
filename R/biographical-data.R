@@ -113,6 +113,9 @@ subset_members <- function(babase) {
                                                     ## TRUE for male question
                                                     if_else(date >= ranked & !is.na(ranked), "adult", ifelse(date >= matured & !is.na(matured) & (date < ranked | is.na(ranked)), "subadult", "juvenile")),
                                                   "An unknown sex")))
+  
+  members_l <- members_l %>% 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "Females", "Males"))
     return(members_l)
 }
 
@@ -520,7 +523,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
         sex == "M" ~ ranked
       )) %>%
       tidyr::drop_na(first_start_date) %>%
-      dplyr::select(sname, sex, birth, first_start_date, statdate, -ranked, -matured)
+      dplyr::select(sname, sex, birth, first_start_date, statdate, ranked, matured)
   }
   else {
     iyol <- iyol %>%
@@ -529,7 +532,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
         sex == "M" ~ birth
       )) %>%
       tidyr::drop_na(first_start_date) %>%
-      dplyr::select(sname, sex, birth, first_start_date, statdate, -ranked, -matured)
+      dplyr::select(sname, sex, birth, first_start_date, statdate, ranked, matured)
   }
 
   make_bday_seq <- function(df) {
@@ -615,8 +618,20 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
     dplyr::mutate(midpoint = start + floor((end - start) / 2),
                   age_start_yrs = as.numeric(start - birth) / 365.25,
                   age_class = floor(plyr::round_any(age_start_yrs, 0.005)) + 1)
-
-  # NOTES:
+  
+  iyol <-  iyol %>%
+    dplyr::mutate(age_class = dplyr::if_else(sex == 'F', 
+                                             if_else(midpoint >= matured & !is.na(matured), "adult", "juvenile"), 
+                                             ## If not female then
+                                             ifelse(sex == 'M', 
+                                                    ## TRUE for male question
+                                                    if_else(midpoint >= ranked & !is.na(ranked), "adult", ifelse(midpoint >= matured & !is.na(matured) & (midpoint < ranked | is.na(ranked)), "subadult", "juvenile")),
+                                                    "An unknown sex")))
+  
+  iyol <- iyol %>% 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "Females", "Males")) 
+  
+    # NOTES:
   # Original SCI scipt produces error in dates for RUT
   # One day difference for AGE due to weirdness with interpolation
   # - AGE has one entry in members after statdate
@@ -626,7 +641,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
   # setdiff(select(tmp1, -end), select(iyol, -end))
 
   iyol <- dplyr::ungroup(iyol)
-
+  
   return(iyol)
 }
 
