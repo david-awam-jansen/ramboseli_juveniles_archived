@@ -106,7 +106,7 @@ subset_members <- function(babase) {
   
   ## Make a column that indicates the age_class of an individual/
   members_l <- members_l %>%
-    dplyr::mutate(age_class = dplyr::if_else(sex == 'F', 
+    dplyr::mutate(age_group = dplyr::if_else(sex == 'F', 
                                              if_else(date >= matured & !is.na(matured), "adult", "juvenile"), 
                                              ## If not female then
                                              ifelse(sex == 'M', 
@@ -115,7 +115,7 @@ subset_members <- function(babase) {
                                                   "An unknown sex")))
   
   members_l <- members_l %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "Females", "Males"))
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_group == 'juvenile', "Females", "Males"))
     return(members_l)
 }
 
@@ -620,7 +620,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
                   age_class = floor(plyr::round_any(age_start_yrs, 0.005)) + 1)
   
   iyol <-  iyol %>%
-    dplyr::mutate(age_class = dplyr::if_else(sex == 'F', 
+    dplyr::mutate(age_group = dplyr::if_else(sex == 'F', 
                                              if_else(midpoint >= matured & !is.na(matured), "adult", "juvenile"), 
                                              ## If not female then
                                              ifelse(sex == 'M', 
@@ -642,7 +642,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
 
   iyol <- dplyr::ungroup(iyol)
   
-  return(iyol)
+    return(iyol)
 }
 
 #' Create a data frame with year-long intervals prior to specific target dates
