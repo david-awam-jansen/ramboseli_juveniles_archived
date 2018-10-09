@@ -130,7 +130,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   # Calculate variables for interactions with males only if:
   # - the interactions are grooming AND the focal animal is female OR
   # - the interactions are anything but grooming
-  include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & df$sex == "F")
+  include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & df$sex != "M" & df$age_group != "adult")
   
   if (include_males) {
     ## Interactions given to males by each actor of focal's sex
@@ -267,7 +267,8 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
   if (is.null(my_iyol) |
       !all(names(my_iyol) %in% c("sname", "grp", "start", "end", "days_present", "sex",
                                  "birth", "first_start_date", "statdate", "birth_dates",
-                                 "midpoint", "age_start_yrs", "age_class", "obs_date")) |
+                                 "midpoint", "age_start_yrs", "age_class", "obs_date", "age_group",
+                                 "SCI_class")) |
       min_res_days < 0) {
     stop("Problem with input data. Use the 'make_iyol' or 'make_target_df' function to create the input.")
   }
