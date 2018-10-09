@@ -130,7 +130,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   # Calculate variables for interactions with males only if:
   # - the interactions are grooming AND the focal animal is female OR
   # - the interactions are anything but grooming
-  include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & df$sex != "M" & df$age_group != "adult")
+  include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & !(df$sex == "M" & df$age_group == "adult"))
   
   if (include_males) {
     ## Interactions given to males by each actor of focal's sex
