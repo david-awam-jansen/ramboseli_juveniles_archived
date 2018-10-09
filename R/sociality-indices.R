@@ -15,25 +15,34 @@ get_mem_dates <- function(my_sub, members_l, df, sel = NULL) {
     dplyr::select(sname, grp, date, !!sel)
 
   return(mem_dates)
+  
+  
+  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
+                                quo(actor_sex), "actee", "F") %>%
+    dplyr::group_by(grp, sname) %>%
+    dplyr::summarise(IfromF = n())
+  
 }
 
 
-get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my_sex) {
-
+get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my_sex, my_class_var, my_class="adult") {
+  
   groom_dates <- my_sub %>%
     dplyr::ungroup() %>%
     dplyr::inner_join(df, by = c("sname" = my_role)) %>%
-    dplyr::filter(date >= start & date <= end & UQ(my_sex_var) == my_sex)
-
+    dplyr::filter(date >= start & date <= end) %>%
+    dplyr::filter(UQ(my_sex_var) %in% my_sex) %>%
+    dplyr::filter(UQ(my_class_var) == my_class) 
+  
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- groom_dates %>%
     dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
-
+  
   # Take set difference and calculate summary
   groom_dates <- groom_dates %>%
     dplyr::setdiff(remove_rows) %>%
     dplyr::select(sname, grp, date, iid)
-
+  # 
   return(groom_dates)
 }
 
@@ -53,10 +62,10 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 #' @examples
 get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                            min_res_days, directional) {
-
+  
   zero_daily_count <- 1/365.25
   log_zero_daily_count <- log2(zero_daily_count)
-
+  
   # Get all members of same sex as the focal animal during relevant time period
   my_subset <- members_l %>%
     dplyr::inner_join(select(df, -sname, -grp), by = c("sex")) %>%
@@ -65,92 +74,118 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     dplyr::summarise(days_present = n(),
                      start = min(date),
                      end = max(date))
-
+  
   ## Focal counts
   # Get all focals during relevant time period in grp
   my_focals <- get_mem_dates(my_subset, members_l, focals_l, sel = quo(sum))
-
+  
   ## Observation days
   # Focal animal was present and at least one focal sample was collected
   obs_days <- my_focals %>%
     group_by(grp, sname) %>%
     summarise(days_observed = n())
-
+  
   my_subset <- my_subset %>%
     left_join(obs_days, by = c("sname", "grp"))
-
+  
   my_focals <- my_focals %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(n_focals = sum(sum))
-
+  
   ## Female counts
   my_females <- get_mem_dates(my_subset, members_l, females_l, sel = quo(nr_females)) %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(mean_f_count = mean(nr_females))
-
+  
   # Join back to my_subset to add n_focals column
   my_subset <- my_subset %>%
     dplyr::left_join(my_focals, by = c("grp", "sname")) %>%
     dplyr::left_join(my_females, by = c("grp", "sname"))
-
+  
   if (nrow(my_subset) == 0 | nrow(my_focals) == 0 | nrow(my_females) == 0) {
     return(dplyr::tbl_df(NULL))
   }
-
+  
   # Filter and calculate variables
   my_subset <- my_subset %>%
     dplyr::filter(days_present >= min_res_days & mean_f_count > 0) %>%
     dplyr::mutate(OE = (n_focals / mean_f_count) / days_present,
                   log2OE = log2(OE)) %>%
     dplyr::filter(!is.na(OE))
-
+  
   ## Interactions given to females by each actor of focal's sex
-  gg_f <- get_interaction_dates(my_subset, members_l, interactions_l,
-                                quo(actee_sex), "actor", "F") %>%
+  gg_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                                  quo(actee_sex), my_role = "actor", my_sex = "F", 
+                                  my_class_var = quo(actee_age_class), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(ItoF = n())
-
+  
   ## Interactions received from females by each actee of focal's sex
-  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
-                                quo(actor_sex), "actee", "F") %>%
+  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                          quo(actor_sex), my_role = "actee", my_sex = "F", 
+                          my_class_var = quo(actor_age_class), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromF = n())
-
+  
   # Calculate variables for interactions with males only if:
   # - the interactions are grooming AND the focal animal is female OR
   # - the interactions are anything but grooming
   include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & df$sex == "F")
-
+  
   if (include_males) {
     ## Interactions given to males by each actor of focal's sex
-    gg_m <- get_interaction_dates(my_subset, members_l, interactions_l,
-                                  quo(actee_sex), "actor", "M") %>%
+    gg_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                            quo(actee_sex), my_role = "actor", my_sex = "M", 
+                            my_class_var = quo(actee_age_class), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(ItoM = n())
-
+    
     ## Interactions received from males by each actee of focal's sex
-    gr_m <- get_interaction_dates(my_subset, members_l, interactions_l,
-                                  quo(actor_sex), "actee", "M") %>%
+    gr_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                                  quo(actor_sex), my_role = "actee", my_sex = "M", 
+                                  my_class_var = quo(actor_age_class), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(IfromM = n())
   }
-
+  
+  ## Interactions given to females by each actor of focal's sex
+  gg_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                                quo(actee_sex), my_role = "actor", my_sex = c("F","M"), 
+                                my_class_var = quo(actee_age_class), my_class = "juvenile") %>%
+    dplyr::group_by(grp, sname) %>%
+    dplyr::summarise(ItoJ = n())
+  
+  ## Interactions received from females by each actee of focal's sex
+  gr_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
+                                quo(actor_sex), my_role = "actee", my_sex = c("F","M"), 
+                                my_class_var = quo(actor_age_class), my_class = "juvenile") %>%
+    dplyr::group_by(grp, sname) %>%
+    dplyr::summarise(IfromJ = n())
+  
   my_subset <- my_subset %>%
     dplyr::left_join(gg_f, by = c("grp", "sname")) %>%
     dplyr::left_join(gr_f, by = c("grp", "sname"))
-
+  
   my_subset <- my_subset %>%
     tidyr::replace_na(list(ItoF = 0, IfromF = 0))
-
+  
   if (include_males) {
     my_subset <- my_subset %>%
       dplyr::left_join(gg_m, by = c("grp", "sname")) %>%
       dplyr::left_join(gr_m, by = c("grp", "sname"))
-
+    
     my_subset <- my_subset %>%
       tidyr::replace_na(list(ItoM = 0, IfromM = 0))
   }
-
+  
+  my_subset <- my_subset %>%
+    dplyr::left_join(gg_j, by = c("grp", "sname")) %>%
+    dplyr::left_join(gr_j, by = c("grp", "sname"))
+  
+  my_subset <- my_subset %>%
+    tidyr::replace_na(list(ItoJ = 0, IfromJ = 0))
+  
+  
   # Calculate variables, first for interactions with females only
   my_subset <- my_subset %>%
     dplyr::mutate(ItoF_daily = ItoF / days_present,
@@ -161,7 +196,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                   log2IfromF_daily = dplyr::case_when(
                     IfromF == 0 ~ log_zero_daily_count,
                     TRUE ~ log2(IfromF_daily)))
-
+  
   if (include_males) {
     my_subset <- my_subset %>%
       dplyr::mutate(ItoM_daily = ItoM / days_present,
@@ -173,22 +208,36 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                       IfromM == 0 ~ log_zero_daily_count,
                       TRUE ~ log2(IfromM_daily)))
   }
-
+  
+  my_subset <- my_subset %>%
+    dplyr::mutate(ItoJ_daily = ItoJ / days_present,
+                  log2ItoJ_daily = dplyr::case_when(
+                    ItoF == 0 ~ log_zero_daily_count,
+                    TRUE ~ log2(ItoJ_daily)),
+                  IfromJ_daily = IfromJ / days_present,
+                  log2IfromJ_daily = dplyr::case_when(
+                    IfromJ == 0 ~ log_zero_daily_count,
+                    TRUE ~ log2(IfromJ_daily)))
+  
   my_subset$SCI_F_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoF_daily ~ log2OE)))
   my_subset$SCI_F_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromF_daily ~ log2OE)))
-
+  
   if (include_males) {
     my_subset$SCI_M_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoM_daily ~ log2OE)))
     my_subset$SCI_M_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromM_daily ~ log2OE)))
   }
-
+  
   if (!directional) {
     my_subset$SCI_F <- (my_subset$SCI_F_Dir + my_subset$SCI_F_Rec) / 2
     if (include_males) {
       my_subset$SCI_M <- (my_subset$SCI_M_Dir + my_subset$SCI_M_Rec) / 2
     }
   }
-
+  
+  my_subset$SCI_J_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoJ_daily ~ log2OE)))
+  my_subset$SCI_J_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromJ_daily ~ log2OE)))
+  
+  
   return(my_subset)
 }
 

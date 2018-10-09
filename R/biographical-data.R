@@ -640,9 +640,10 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
   #   dplyr::mutate(grp = as.double(grp))
   # setdiff(select(tmp1, -end), select(iyol, -end))
 
-  iyol <- dplyr::ungroup(iyol)
+  iyol <- dplyr::ungroup(iyol) %>% select(-one_of(c("matured", "ranked"))) 
+
   
-    return(iyol)
+  iyol %>% select(-one_of(c("matured", "ranked")))
 }
 
 #' Create a data frame with year-long intervals prior to specific target dates
