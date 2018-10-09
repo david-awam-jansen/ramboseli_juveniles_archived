@@ -115,7 +115,7 @@ subset_members <- function(babase) {
                                                   "An unknown sex")))
   
   members_l <- members_l %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_group == 'juvenile', "Females", "Males"))
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "AFandJ", "AM")) 
     return(members_l)
 }
 
@@ -629,7 +629,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
                                                     "An unknown sex")))
   
   iyol <- iyol %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "Females", "Males")) 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "AFandJ", "AM")) 
   
     # NOTES:
   # Original SCI scipt produces error in dates for RUT
