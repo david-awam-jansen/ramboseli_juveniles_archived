@@ -310,6 +310,7 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
     my_iyol$subset <- list(NULL)
     pb <- txtProgressBar(min = 0, max = nrow(my_iyol), style = 3) # Progress bar
     for (i in 1:nrow(my_iyol)) {
+      print(i)
       my_iyol[i, ]$subset <- list(get_sci_subset(my_iyol[i, ], members_l,
                                                  focals_l, females_l,
                                                  interactions_l, min_res_days,
