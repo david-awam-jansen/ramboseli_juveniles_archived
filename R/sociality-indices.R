@@ -68,9 +68,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   
   # Get all members of same sex as the focal animal during relevant time period
   my_subset <- members_l %>%
-    dplyr::inner_join(select(df, -sname, -grp), by = c("sex")) %>%
+    dplyr::inner_join(select(df, -sname, -grp, -age_class), by = c("SCI_class")) %>%
     dplyr::filter(date >= start & date <= end) %>%
-    dplyr::group_by(sname, grp) %>%
+    dplyr::group_by(sname, grp, age_class, SCI_class) %>%
     dplyr::summarise(days_present = n(),
                      start = min(date),
                      end = max(date))
@@ -219,22 +219,33 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                     IfromJ == 0 ~ log_zero_daily_count,
                     TRUE ~ log2(IfromJ_daily)))
   
-  my_subset$SCI_F_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoF_daily ~ log2OE)))
-  my_subset$SCI_F_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromF_daily ~ log2OE)))
+  ## The SCI_F and SCI_M will be calculated for adults only (either males or females)
+  ## Juveniles are included in the with adult females 
+  ## The juvenile SCI values will be calculated as the residual value to the adult female regression line
+  ## Create a dataset to predict resuduals for juveniles
+  full_OE <- my_subset[, c("sname", "age_class",  "SCI_class", "log2OE")]
+  my_subset
   
-  message("SCI_F has been calculated")
+  # my_subset$SCI_F_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoF_daily ~ log2OE)))
+  # my_subset$SCI_F_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromF_daily ~ log2OE)))
+  
+  my_subset$SCI_F_Dir <- my_subset$log2ItoF_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2ItoF_daily ~ log2OE),
+                                                            newdata=full_OE[,"log2OE"])
+  my_subset$SCI_F_Rec <- my_subset$log2IfromF_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2IfromF_daily ~ log2OE),
+                                                            newdata=full_OE[,"log2OE"])
+  
   
   if (include_males) {
-    my_subset$SCI_M_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoM_daily ~ log2OE)))
-    my_subset$SCI_M_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromM_daily ~ log2OE)))
-    
-    message("SCI_M has been calculated")
+    my_subset$SCI_M_Dir <- my_subset$log2ItoM_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2ItoM_daily ~ log2OE),
+                                                              newdata=full_OE[,"log2OE"])
+    my_subset$SCI_M_Rec <- my_subset$log2IfromM_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2IfromM_daily ~ log2OE),
+                                                                newdata=full_OE[,"log2OE"])
   }
   
-  my_subset$SCI_J_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoJ_daily ~ log2OE)))
-  my_subset$SCI_J_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromJ_daily ~ log2OE)))
-  
-  message("SCI_J has been calculated")
+  my_subset$SCI_J_Dir <- my_subset$log2ItoJ_daily - predict(lm(data=my_subset[my_subset$age_class == 'juvenile',], log2ItoJ_daily ~ log2OE),
+                                                            newdata=full_OE[,"log2OE"])
+  my_subset$SCI_J_Rec <- my_subset$log2IfromJ_daily - predict(lm(data=my_subset[my_subset$age_class == 'juvenile',], log2IfromJ_daily ~ log2OE),
+                                                              newdata=full_OE[,"log2OE"])
   
   if (!directional) {
     my_subset$SCI_F <- (my_subset$SCI_F_Dir + my_subset$SCI_F_Rec) / 2
@@ -242,7 +253,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
       my_subset$SCI_M <- (my_subset$SCI_M_Dir + my_subset$SCI_M_Rec) / 2
     }
     my_subset$SCI_J <- (my_subset$SCI_J_Dir + my_subset$SCI_J_Rec) / 2
-  }
+    }
   
   return(my_subset)
 }
