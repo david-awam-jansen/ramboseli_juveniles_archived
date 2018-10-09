@@ -222,13 +222,19 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   my_subset$SCI_F_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoF_daily ~ log2OE)))
   my_subset$SCI_F_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromF_daily ~ log2OE)))
   
+  message("SCI_F has been calculated")
+  
   if (include_males) {
     my_subset$SCI_M_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoM_daily ~ log2OE)))
     my_subset$SCI_M_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromM_daily ~ log2OE)))
+    
+    message("SCI_M has been calculated")
   }
   
   my_subset$SCI_J_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoJ_daily ~ log2OE)))
   my_subset$SCI_J_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromJ_daily ~ log2OE)))
+  
+  message("SCI_J has been calculated")
   
   if (!directional) {
     my_subset$SCI_F <- (my_subset$SCI_F_Dir + my_subset$SCI_F_Rec) / 2
@@ -310,7 +316,6 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
     my_iyol$subset <- list(NULL)
     pb <- txtProgressBar(min = 0, max = nrow(my_iyol), style = 3) # Progress bar
     for (i in 1:nrow(my_iyol)) {
-      print(i)
       my_iyol[i, ]$subset <- list(get_sci_subset(my_iyol[i, ], members_l,
                                                  focals_l, females_l,
                                                  interactions_l, min_res_days,
