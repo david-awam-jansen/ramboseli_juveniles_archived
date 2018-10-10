@@ -63,7 +63,6 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                            min_res_days, directional) {
   
-  message(df)
   zero_daily_count <- 1/365.25
   log_zero_daily_count <- log2(zero_daily_count)
   
