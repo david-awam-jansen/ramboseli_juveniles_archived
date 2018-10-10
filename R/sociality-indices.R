@@ -249,7 +249,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     if (include_males) {
       my_subset$SCI_M <- (my_subset$SCI_M_Dir + my_subset$SCI_M_Rec) / 2
     }
+    if (include_juveniles) {
     my_subset$SCI_J <- (my_subset$SCI_J_Dir + my_subset$SCI_J_Rec) / 2
+    }
   }
 
   return(my_subset)
