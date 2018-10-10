@@ -115,7 +115,7 @@ subset_members <- function(babase) {
                                                   "An unknown sex")))
   
   members_l <- members_l %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "AFandJ", "AM")) 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_group == 'juvenile', "AFandJ", "AM")) 
     return(members_l)
 }
 
@@ -221,7 +221,7 @@ subset_females <- function(members_l) {
   ## Get a count of number of adult females per day in a grp
   females_l <- members_l %>%
     dplyr::filter(sex == "F") %>%
-    dplyr::filter(age_class == "adult") %>%
+    dplyr::filter(age_group == "adult") %>%
     dplyr::group_by(grp, date) %>%
     dplyr::summarise(nr_females = n()) %>%
     dplyr::ungroup()
@@ -327,13 +327,13 @@ subset_interactions <- function(babase, members_l, my_acts = NULL) {
   #                      (actee_sex == "M" & date >= actee_ranked)))
   
   inter <- inter %>%
-    dplyr::mutate(actor_age_class = dplyr::if_else(actor_sex == 'F', 
+    dplyr::mutate(actor_age_group = dplyr::if_else(actor_sex == 'F', 
                                              if_else(date >= actor_matured & !is.na(actor_matured), "adult", "juvenile"), 
                                              if_else(actor_sex == 'M', 
                                                 if_else(date >= actor_ranked & !is.na(actor_ranked), "adult", 
                                                 if_else(date >= actor_matured & !is.na(actor_matured) & (date < actor_ranked | is.na(actor_ranked)), "subadult", "juvenile")),
                                                     "An unknown sex"))) %>%
-  dplyr::mutate(actee_age_class = dplyr::if_else(actee_sex == 'F', 
+  dplyr::mutate(actee_age_group = dplyr::if_else(actee_sex == 'F', 
                                                  if_else(date >= actee_matured & !is.na(actee_matured), "adult", "juvenile"), 
                                                  if_else(actee_sex == 'M', 
                                                     if_else(date >= actee_ranked & !is.na(actee_ranked), "adult", 
@@ -346,7 +346,7 @@ subset_interactions <- function(babase, members_l, my_acts = NULL) {
 
   inter <- inter %>%
     dplyr::select(iid, sid, act, actor, actee, actor_sex, actee_sex, date,
-                  yearmon, actor_grp, actee_grp, actor_age_class, actee_age_class)
+                  yearmon, actor_grp, actee_grp, actor_age_group, actee_age_group)
 
   # If user requested grooming data, deal with first-of-month issue
 
@@ -629,7 +629,7 @@ make_iyol <- function(babase, members_l, focals_l = NULL, interactions_l = NULL,
                                                     "An unknown sex")))
   
   iyol <- iyol %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "AFandJ", "AM")) 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_group == 'juvenile', "AFandJ", "AM")) 
   
     # NOTES:
   # Original SCI scipt produces error in dates for RUT

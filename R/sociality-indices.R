@@ -68,9 +68,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   
   # Get all members of same sex as the focal animal during relevant time period
   my_subset <- members_l %>%
-    dplyr::inner_join(select(df, -sname, -grp, -age_class), by = c("SCI_class")) %>%
+    dplyr::inner_join(select(df, -sname, -grp, -age_group), by = c("SCI_class")) %>%
     dplyr::filter(date >= start & date <= end) %>%
-    dplyr::group_by(sname, grp, age_class, SCI_class) %>%
+    dplyr::group_by(sname, grp, age_group, SCI_class) %>%
     dplyr::summarise(days_present = n(),
                      start = min(date),
                      end = max(date))
@@ -116,14 +116,14 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   ## Interactions given to females by each actor of focal's sex
   gg_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
                                   quo(actee_sex), my_role = "actor", my_sex = "F", 
-                                  my_class_var = quo(actee_age_class), my_class = "adult") %>%
+                                  my_class_var = quo(actee_age_group), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(ItoF = n())
   
   ## Interactions received from females by each actee of focal's sex
   gr_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
                           quo(actor_sex), my_role = "actee", my_sex = "F", 
-                          my_class_var = quo(actor_age_class), my_class = "adult") %>%
+                          my_class_var = quo(actor_age_group), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromF = n())
   
@@ -136,14 +136,14 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     ## Interactions given to males by each actor of focal's sex
     gg_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
                             quo(actee_sex), my_role = "actor", my_sex = "M", 
-                            my_class_var = quo(actee_age_class), my_class = "adult") %>%
+                            my_class_var = quo(actee_age_group), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(ItoM = n())
     
     ## Interactions received from males by each actee of focal's sex
     gr_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
                                   quo(actor_sex), my_role = "actee", my_sex = "M", 
-                                  my_class_var = quo(actor_age_class), my_class = "adult") %>%
+                                  my_class_var = quo(actor_age_group), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(IfromM = n())
   }
@@ -151,14 +151,14 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   ## Interactions given to females by each actor of focal's sex
   gg_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
                                 quo(actee_sex), my_role = "actor", my_sex = c("F","M"), 
-                                my_class_var = quo(actee_age_class), my_class = "juvenile") %>%
+                                my_class_var = quo(actee_age_group), my_class = "juvenile") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(ItoJ = n())
   
   ## Interactions received from females by each actee of focal's sex
   gr_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
                                 quo(actor_sex), my_role = "actee", my_sex = c("F","M"), 
-                                my_class_var = quo(actor_age_class), my_class = "juvenile") %>%
+                                my_class_var = quo(actor_age_group), my_class = "juvenile") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromJ = n())
   
@@ -223,28 +223,28 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   ## Juveniles are included in the with adult females 
   ## The juvenile SCI values will be calculated as the residual value to the adult female regression line
   ## Create a dataset to predict resuduals for juveniles
-  full_OE <- my_subset[, c("sname", "age_class",  "SCI_class", "log2OE")]
+  full_OE <- my_subset[, c("sname", "age_group",  "SCI_class", "log2OE")]
   my_subset
   
   # my_subset$SCI_F_Dir <- as.numeric(residuals(lm(data = my_subset, log2ItoF_daily ~ log2OE)))
   # my_subset$SCI_F_Rec <- as.numeric(residuals(lm(data = my_subset, log2IfromF_daily ~ log2OE)))
   
-  my_subset$SCI_F_Dir <- my_subset$log2ItoF_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2ItoF_daily ~ log2OE),
+  my_subset$SCI_F_Dir <- my_subset$log2ItoF_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2ItoF_daily ~ log2OE),
                                                             newdata=full_OE[,"log2OE"])
-  my_subset$SCI_F_Rec <- my_subset$log2IfromF_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2IfromF_daily ~ log2OE),
+  my_subset$SCI_F_Rec <- my_subset$log2IfromF_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2IfromF_daily ~ log2OE),
                                                             newdata=full_OE[,"log2OE"])
   
   
   if (include_males) {
-    my_subset$SCI_M_Dir <- my_subset$log2ItoM_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2ItoM_daily ~ log2OE),
+    my_subset$SCI_M_Dir <- my_subset$log2ItoM_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2ItoM_daily ~ log2OE),
                                                               newdata=full_OE[,"log2OE"])
-    my_subset$SCI_M_Rec <- my_subset$log2IfromM_daily - predict(lm(data=my_subset[my_subset$age_class == 'adult',], log2IfromM_daily ~ log2OE),
+    my_subset$SCI_M_Rec <- my_subset$log2IfromM_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2IfromM_daily ~ log2OE),
                                                                 newdata=full_OE[,"log2OE"])
   }
   
-  my_subset$SCI_J_Dir <- my_subset$log2ItoJ_daily - predict(lm(data=my_subset[my_subset$age_class == 'juvenile',], log2ItoJ_daily ~ log2OE),
+  my_subset$SCI_J_Dir <- my_subset$log2ItoJ_daily - predict(lm(data=my_subset[my_subset$age_group == 'juvenile',], log2ItoJ_daily ~ log2OE),
                                                             newdata=full_OE[,"log2OE"])
-  my_subset$SCI_J_Rec <- my_subset$log2IfromJ_daily - predict(lm(data=my_subset[my_subset$age_class == 'juvenile',], log2IfromJ_daily ~ log2OE),
+  my_subset$SCI_J_Rec <- my_subset$log2IfromJ_daily - predict(lm(data=my_subset[my_subset$age_group == 'juvenile',], log2IfromJ_daily ~ log2OE),
                                                               newdata=full_OE[,"log2OE"])
   
   if (!directional) {
