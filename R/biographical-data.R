@@ -115,7 +115,7 @@ subset_members <- function(babase) {
                                                   "An unknown sex")))
   
   members_l <- members_l %>% 
-    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_class == 'juvenile', "AFandJ", "AM")) 
+    dplyr::mutate(SCI_class = dplyr::if_else(sex == 'F' | age_group == 'juvenile', "AFandJ", "AM")) 
     return(members_l)
 }
 
