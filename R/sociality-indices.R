@@ -465,14 +465,20 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
                               directional) {
 
   # Find and return all co-residence dates for focal_sname and partner_sname in my_members
-  get_overlap_dates <- function(focal_sname, partner_sname, focal_grp, partner_grp) {
+  get_overlap_dates <- function(focal_sname, partner_sname, 
+                                focal_grp, partner_grp,
+                                focal_age_group, partner_age_group) {
 
     focal_dates <- my_members %>%
-      dplyr::filter(sname == focal_sname & grp == focal_grp) %>%
+      dplyr::filter(sname == focal_sname & 
+                      grp == focal_grp &
+                      age_grp == focal_age_group) %>%
       dplyr::pull(date)
 
     partner_dates <- my_members %>%
-      dplyr::filter(sname == partner_sname & grp == partner_grp) %>%
+      dplyr::filter(sname == partner_sname & 
+                      grp == partner_grp &
+                      age_group == partner_age_group) %>%
       dplyr::pull(date)
 
     overlap_dates <- dplyr::intersect(focal_dates, partner_dates)
