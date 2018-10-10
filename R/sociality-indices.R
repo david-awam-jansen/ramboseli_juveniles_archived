@@ -204,7 +204,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   
   # Calculate variables for interactions with juveniles only if:
   # - the focal is a juvenile
-  include_juveniles <- df$age_group == "juvenile")
+  include_juveniles <- df$age_group == "juvenile"
   
   if (include_juveniles) {
     ## Interactions given to females by each actor of focal's sex
