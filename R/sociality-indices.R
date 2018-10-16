@@ -472,7 +472,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
     focal_dates <- my_members %>%
       dplyr::filter(sname == focal_sname & 
                       grp == focal_grp &
-                      age_grp == focal_age_group) %>%
+                      age_group == focal_age_group) %>%
       dplyr::pull(date)
 
     partner_dates <- my_members %>%
@@ -558,48 +558,49 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
     # number of days present, first date, last date
     my_subset <- my_members %>%
       dplyr::rename(sname_sex = sex) %>%
-      dplyr::group_by(sname, grp, sname_sex) %>%
+      dplyr::group_by(sname, age_group, grp, sname_sex) %>%
       dplyr::summarise(days_present = n(),
                        start = min(date),
                        end = max(date))
   }
-
-  # For each of these records, find all possible dyad partners
-  # Store as new list column and unnest to expand
   dyads <- my_subset %>%
     dplyr::mutate(partner = list(my_subset$sname[my_subset$sname != sname])) %>%
     tidyr::unnest()
-
+  
   # Get sex and grp of partner
   # Remove dyads not in same groups
   dyads <- dyads %>%
     dplyr::inner_join(dplyr::select(my_subset, partner = sname,
-                                    partner_sex = sname_sex, partner_grp = grp),
+                                    partner_sex = sex, partner_grp = grp,
+                                    partner_age_group = age_group),
                       by = "partner") %>%
     dplyr::filter(grp == partner_grp)
-
+  
+  
   # Note that the step above created duplicated dyads
   # e.g., sname A and partner B, sname B and partner A
   # If DSI is symmetric, these can be removed
   # That's true here, so remove duplicate dyads
   my_subset <- dyads %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(tmp = paste(grp, sort(c(sname, partner)), collapse = '')) %>%
+    dplyr::rowwise() %>% 
+    unite(temp1, sname, age_group, remove = FALSE) %>% 
+    unite(temp2, partner, partner_age_group, remove = FALSE)  %>% 
+    dplyr::mutate(tmp = paste(grp, sort(c(temp1, temp2)), collapse = ' ')) %>%  
     dplyr::distinct(tmp, .keep_all = TRUE) %>%
-    dplyr::select(-tmp) %>%
+    dplyr::select(-tmp, -temp1, -temp2) %>%
     dplyr::ungroup()
 
   # Remove male-male dyads for grooming
   if (interactions_l$act[[1]] == "G") {
     my_subset <- my_subset %>%
-      dplyr::filter(!(sname_sex == "M" & partner_sex == "M"))
+      dplyr::filter(!(sname_sex == "M" & partner_sex == "M" & age_group == "Adult" & partner_age_group == "adult"))
   }
 
   ## Co-residence dates
   # Find all dates during which focal and partner co-resided in my_grp
   # Get a count of these dates
   my_subset <- my_subset %>%
-    dplyr::mutate(coresidence_dates = purrr::pmap(list(sname, partner, grp, partner_grp),
+    dplyr::mutate(coresidence_dates = purrr::pmap(list(sname, partner, grp, partner_grp, age_group, partner_age_group),
                                                   get_overlap_dates)) %>%
     dplyr::rowwise() %>%
     dplyr::mutate(coresidence_days = length(coresidence_dates)) %>%
@@ -657,13 +658,16 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
 
     # Classify dyads by dyad type ("F-F", "F-M", or "M-M"), and nest by dyad type
     # Since this is not directional, "F-M" and "M-F" are combined into one category: F-M
-    my_subset <- my_subset %>%
+    my_subset <- 
+      my_subset %>%
       dplyr::rowwise() %>%
-      dplyr::mutate(dyad = paste(sort(c(sname, partner)), collapse = '-'),
-                    dyad_type = paste(sort(c(sname_sex, partner_sex)), collapse = '-')) %>%
-      dplyr::ungroup() %>%
-      dplyr::group_by(dyad_type) %>%
-      tidyr::nest()
+        dplyr::mutate(SCI_class = dplyr::if_else(sname_sex == 'F' | age_group == 'juvenile', "AFandJ", "AM")) %>%
+        dplyr::mutate(partner_SCI_class = dplyr::if_else(partner_sex == 'F' | partner_age_group == 'juvenile', "AFandJ", "AM")) %>%
+        dplyr::mutate(dyad = paste(sort(c(sname, partner)), collapse = '-'),
+                      dyad_type = paste(sort(c(SCI_class, partner_SCI_class)), collapse = '-')) %>%
+        dplyr::ungroup() %>%
+        dplyr::group_by(dyad_type) %>%
+        tidyr::nest()
 
     # Fit regression separately for the two dyad types and get residuals
     my_subset <- my_subset %>%
