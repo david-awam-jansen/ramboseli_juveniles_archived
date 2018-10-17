@@ -571,7 +571,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   # Remove dyads not in same groups
   dyads <- dyads %>%
     dplyr::inner_join(dplyr::select(my_subset, partner = sname,
-                                    partner_sex = sex, partner_grp = grp,
+                                    partner_sex = sname_sex, partner_grp = grp,
                                     partner_age_group = age_group),
                       by = "partner") %>%
     dplyr::filter(grp == partner_grp)
@@ -671,7 +671,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
 
     # Fit regression separately for the two dyad types and get residuals
     my_subset <- my_subset %>%
-      dplyr::mutate(data = purrr::map(data, fit_dyadic_regression)) %>%
+      dplyr::mutate(data = purrr::map(data, fit_dyadic_regression))  %>%
       tidyr::unnest()
 
     # Reorganize columns
@@ -761,7 +761,11 @@ fit_dyadic_regression <- function(df) {
     df <- dplyr::bind_rows(zero_subset, nonzero_subset)
   }
   else {
-    df$res_i_adj <- as.numeric(residuals(lm(data = df, log2_i_adj ~ log2OE)))
+    full_OE <- df[, c("sname", "age_group",  "SCI_class", "log2OE")]
+    
+    df$res_i_adj <- df$log2_i_adj -  predict(lm(data = df[dg$age_group == 'adult',], log2_i_adj ~ log2OE),
+                                             newdata=full_OE[,"log2OE"])
+    #df$res_i_adj <- as.numeric(residuals(lm(data = df, log2_i_adj ~ log2OE)))
   }
 
   return(df)
