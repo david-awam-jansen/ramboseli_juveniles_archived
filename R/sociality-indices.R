@@ -516,7 +516,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
 
     return(nrow(res))
   }
-
+  my_focal <- df$sname
   my_grp <- df$grp
   my_sname <- df$sname
   my_start <- df$start
@@ -562,6 +562,12 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
       dplyr::summarise(days_present = n(),
                        start = min(date),
                        end = max(date))
+    
+    ## We only need juvenile data for the focal if its juvenile
+    my_subset <- my_subset %>% mutate(focal = sname == my_focal & grp == grp) %>%
+      filter(focal == TRUE | age_group == "adult")
+    
+    
   }
   dyads <- my_subset %>%
     dplyr::mutate(partner = list(my_subset$sname[my_subset$sname != sname])) %>%
@@ -668,7 +674,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
         dplyr::ungroup() %>%
         dplyr::group_by(dyad_type) %>%
         tidyr::nest()
-
+    
     # Fit regression separately for the two dyad types and get residuals
     my_subset <- my_subset %>%
       dplyr::mutate(data = purrr::map(data, fit_dyadic_regression))  %>%
