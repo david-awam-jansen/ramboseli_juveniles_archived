@@ -769,7 +769,7 @@ fit_dyadic_regression <- function(df) {
   else {
     full_OE <- df[, c("sname", "age_group",  "SCI_class", "log2OE")]
     
-    df$res_i_adj <- df$log2_i_adj -  predict(lm(data = df[dg$age_group == 'adult',], log2_i_adj ~ log2OE),
+    df$res_i_adj <- df$log2_i_adj -  predict(lm(data = df[df$age_group == 'adult',], log2_i_adj ~ log2OE),
                                              newdata=full_OE[,"log2OE"])
     #df$res_i_adj <- as.numeric(residuals(lm(data = df, log2_i_adj ~ log2OE)))
   }
