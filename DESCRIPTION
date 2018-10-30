@@ -1,10 +1,10 @@
-Package: ramboseli
+Package: ramboseli_juveniles
 Type: Package
 Title: Utility functions for the babase database
 Version: 0.1.0
 Authors@R: person("Fernando", "Campos", email = "camposfa@gmail.com",
   role = c("aut", "cre"))
-Maintainer: Fernando Campos <camposfa@gmail.com>
+Maintainer: Fernando Campos <camposfa@gmail.com> & David Jansen <david.awam.jansen@gmail.com>
 Description: Utility functions for the babase database
 Encoding: UTF-8
 LazyData: true
