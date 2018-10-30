@@ -7,14 +7,15 @@ get_mem_dates <- function(my_sub, members_l, df, sel = NULL) {
 
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- mem_dates %>%
-    dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
+    dplyr::anti_join(members_l, by = c("sname", "grp", "age_group", "date"))
 
   # Take set difference and calculate summary
   mem_dates <- mem_dates %>%
     dplyr::setdiff(remove_rows) %>%
-    dplyr::select(sname, grp, date, !!sel)
+    dplyr::select(sname, grp, age_group, date, !!sel)
 
   return(mem_dates)
+<<<<<<< HEAD
 
 
   gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
@@ -22,6 +23,8 @@ get_mem_dates <- function(my_sub, members_l, df, sel = NULL) {
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromF = n())
 
+=======
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
 }
 
 
@@ -36,6 +39,7 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- groom_dates %>%
+<<<<<<< HEAD
     dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
 
   # Take set difference and calculate summary
@@ -43,6 +47,15 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
     dplyr::setdiff(remove_rows) %>%
     dplyr::select(sname, grp, date, iid)
   #
+=======
+    dplyr::anti_join(members_l, by = c("sname", "age_group", "grp", "date"))
+  
+  # Take set difference and calculate summary
+  groom_dates <- groom_dates %>%
+    dplyr::setdiff(remove_rows) %>%
+    dplyr::select(sname, age_group, grp, date, iid)
+  # 
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   return(groom_dates)
 }
 
@@ -82,26 +95,37 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   ## Observation days
   # Focal animal was present and at least one focal sample was collected
   obs_days <- my_focals %>%
-    group_by(grp, sname) %>%
+    group_by(grp, age_group, sname) %>%
     summarise(days_observed = n())
 
   my_subset <- my_subset %>%
+<<<<<<< HEAD
     left_join(obs_days, by = c("sname", "grp"))
 
+=======
+    left_join(obs_days, by = c("sname", "grp", "age_group"))
+  
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_focals <- my_focals %>%
-    dplyr::group_by(grp, sname) %>%
+    dplyr::group_by(grp, age_group, sname) %>%
     dplyr::summarise(n_focals = sum(sum))
 
   ## Female counts
   my_females <- get_mem_dates(my_subset, members_l, females_l, sel = quo(nr_females)) %>%
-    dplyr::group_by(grp, sname) %>%
+    dplyr::group_by(grp, age_group, sname) %>%
     dplyr::summarise(mean_f_count = mean(nr_females))
 
   # Join back to my_subset to add n_focals column
   my_subset <- my_subset %>%
+<<<<<<< HEAD
     dplyr::left_join(my_focals, by = c("grp", "sname")) %>%
     dplyr::left_join(my_females, by = c("grp", "sname"))
 
+=======
+    dplyr::left_join(my_focals, by = c("grp", "age_group", "sname")) %>%
+    dplyr::left_join(my_females, by = c("grp", "age_group", "sname"))
+  
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   if (nrow(my_subset) == 0 | nrow(my_focals) == 0 | nrow(my_females) == 0) {
     return(dplyr::tbl_df(NULL))
   }
@@ -117,20 +141,26 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
   gg_f <- get_interaction_dates(my_subset, members_l, interactions_l,
                                   quo(actee_sex), my_role = "actor", my_sex = "F",
                                   my_class_var = quo(actee_age_group), my_class = "adult") %>%
-    dplyr::group_by(grp, sname) %>%
+    dplyr::group_by(grp, age_group, sname) %>%
     dplyr::summarise(ItoF = n())
 
   ## Interactions received from females by each actee of focal's sex
   gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
                           quo(actor_sex), my_role = "actee", my_sex = "F",
                           my_class_var = quo(actor_age_group), my_class = "adult") %>%
-    dplyr::group_by(grp, sname) %>%
+    dplyr::group_by(grp, age_group, sname) %>%
     dplyr::summarise(IfromF = n())
 
   my_subset <- my_subset %>%
+<<<<<<< HEAD
     dplyr::left_join(gg_f, by = c("grp", "sname")) %>%
     dplyr::left_join(gr_f, by = c("grp", "sname"))
 
+=======
+    dplyr::left_join(gg_f, by = c("grp", "age_group", "sname")) %>%
+    dplyr::left_join(gr_f, by = c("grp", "age_group", "sname"))
+  
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_subset <- my_subset %>%
     tidyr::replace_na(list(ItoF = 0, IfromF = 0))
 
@@ -168,20 +198,26 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     gg_m <- get_interaction_dates(my_subset, members_l, interactions_l,
                             quo(actee_sex), my_role = "actor", my_sex = "M",
                             my_class_var = quo(actee_age_group), my_class = "adult") %>%
-      dplyr::group_by(grp, sname) %>%
+      dplyr::group_by(grp, age_group, sname) %>%
       dplyr::summarise(ItoM = n())
 
     ## Interactions received from males by each actee of focal's sex
     gr_m <- get_interaction_dates(my_subset, members_l, interactions_l,
                                   quo(actor_sex), my_role = "actee", my_sex = "M",
                                   my_class_var = quo(actor_age_group), my_class = "adult") %>%
-      dplyr::group_by(grp, sname) %>%
+      dplyr::group_by(grp, age_group, sname) %>%
       dplyr::summarise(IfromM = n())
 
     my_subset <- my_subset %>%
+<<<<<<< HEAD
       dplyr::left_join(gg_m, by = c("grp", "sname")) %>%
       dplyr::left_join(gr_m, by = c("grp", "sname"))
 
+=======
+      dplyr::left_join(gg_m, by = c("grp", "age_group", "sname")) %>%
+      dplyr::left_join(gr_m, by = c("grp", "age_group", "sname"))
+    
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
     my_subset <- my_subset %>%
       tidyr::replace_na(list(ItoM = 0, IfromM = 0))
 
@@ -210,20 +246,26 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     gg_j <- get_interaction_dates(my_subset, members_l, interactions_l,
                                   quo(actee_sex), my_role = "actor", my_sex = c("F","M"),
                                   my_class_var = quo(actee_age_group), my_class = "juvenile") %>%
-      dplyr::group_by(grp, sname) %>%
+      dplyr::group_by(grp, age_group, sname) %>%
       dplyr::summarise(ItoJ = n())
 
     ## Interactions received from females by each actee of focal's sex
     gr_j <- get_interaction_dates(my_subset, members_l, interactions_l,
                                   quo(actor_sex), my_role = "actee", my_sex = c("F","M"),
                                   my_class_var = quo(actor_age_group), my_class = "juvenile") %>%
-      dplyr::group_by(grp, sname) %>%
+      dplyr::group_by(grp, age_group, sname) %>%
       dplyr::summarise(IfromJ = n())
 
       my_subset <- my_subset %>%
+<<<<<<< HEAD
         dplyr::left_join(gg_j, by = c("grp", "sname")) %>%
         dplyr::left_join(gr_j, by = c("grp", "sname"))
 
+=======
+        dplyr::left_join(gg_j, by = c("grp", "age_group", "sname")) %>%
+        dplyr::left_join(gr_j, by = c("grp", "age_group", "sname"))
+  
+>>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
       my_subset <- my_subset %>%
         tidyr::replace_na(list(ItoJ = 0, IfromJ = 0))
 
