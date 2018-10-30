@@ -15,34 +15,34 @@ get_mem_dates <- function(my_sub, members_l, df, sel = NULL) {
     dplyr::select(sname, grp, date, !!sel)
 
   return(mem_dates)
-  
-  
+
+
   gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
                                 quo(actor_sex), "actee", "F") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromF = n())
-  
+
 }
 
 
 get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my_sex, my_class_var, my_class="adult") {
-  
+
   groom_dates <- my_sub %>%
     dplyr::ungroup() %>%
     dplyr::inner_join(df, by = c("sname" = my_role)) %>%
     dplyr::filter(date >= start & date <= end) %>%
     dplyr::filter(UQ(my_sex_var) %in% my_sex) %>%
-    dplyr::filter(UQ(my_class_var) == my_class) 
-  
+    dplyr::filter(UQ(my_class_var) == my_class)
+
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- groom_dates %>%
     dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
-  
+
   # Take set difference and calculate summary
   groom_dates <- groom_dates %>%
     dplyr::setdiff(remove_rows) %>%
     dplyr::select(sname, grp, date, iid)
-  # 
+  #
   return(groom_dates)
 }
 
@@ -62,10 +62,10 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 #' @examples
 get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                            min_res_days, directional) {
-  
+
   zero_daily_count <- 1/365.25
   log_zero_daily_count <- log2(zero_daily_count)
-  
+
   # Get all members of same sex as the focal animal during relevant time period
   my_subset <- members_l %>%
     dplyr::inner_join(select(df, -sname, -grp, -age_group), by = c("SCI_class")) %>%
@@ -74,66 +74,66 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     dplyr::summarise(days_present = n(),
                      start = min(date),
                      end = max(date))
-  
+
   ## Focal counts
   # Get all focals during relevant time period in grp
   my_focals <- get_mem_dates(my_subset, members_l, focals_l, sel = quo(sum))
-  
+
   ## Observation days
   # Focal animal was present and at least one focal sample was collected
   obs_days <- my_focals %>%
     group_by(grp, sname) %>%
     summarise(days_observed = n())
-  
+
   my_subset <- my_subset %>%
     left_join(obs_days, by = c("sname", "grp"))
-  
+
   my_focals <- my_focals %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(n_focals = sum(sum))
-  
+
   ## Female counts
   my_females <- get_mem_dates(my_subset, members_l, females_l, sel = quo(nr_females)) %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(mean_f_count = mean(nr_females))
-  
+
   # Join back to my_subset to add n_focals column
   my_subset <- my_subset %>%
     dplyr::left_join(my_focals, by = c("grp", "sname")) %>%
     dplyr::left_join(my_females, by = c("grp", "sname"))
-  
+
   if (nrow(my_subset) == 0 | nrow(my_focals) == 0 | nrow(my_females) == 0) {
     return(dplyr::tbl_df(NULL))
   }
-  
+
   # Filter and calculate variables
   my_subset <- my_subset %>%
     dplyr::filter(days_present >= min_res_days & mean_f_count > 0) %>%
     dplyr::mutate(OE = (n_focals / mean_f_count) / days_present,
                   log2OE = log2(OE)) %>%
     dplyr::filter(!is.na(OE))
-  
+
   ## Interactions given to females by each actor of focal's sex
-  gg_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                                  quo(actee_sex), my_role = "actor", my_sex = "F", 
+  gg_f <- get_interaction_dates(my_subset, members_l, interactions_l,
+                                  quo(actee_sex), my_role = "actor", my_sex = "F",
                                   my_class_var = quo(actee_age_group), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(ItoF = n())
-  
+
   ## Interactions received from females by each actee of focal's sex
-  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                          quo(actor_sex), my_role = "actee", my_sex = "F", 
+  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
+                          quo(actor_sex), my_role = "actee", my_sex = "F",
                           my_class_var = quo(actor_age_group), my_class = "adult") %>%
     dplyr::group_by(grp, sname) %>%
     dplyr::summarise(IfromF = n())
-  
+
   my_subset <- my_subset %>%
     dplyr::left_join(gg_f, by = c("grp", "sname")) %>%
     dplyr::left_join(gr_f, by = c("grp", "sname"))
-  
+
   my_subset <- my_subset %>%
     tidyr::replace_na(list(ItoF = 0, IfromF = 0))
-  
+
   # Calculate variables, first for interactions with females only
   my_subset <- my_subset %>%
     dplyr::mutate(ItoF_daily = ItoF / days_present,
@@ -144,47 +144,47 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                   log2IfromF_daily = dplyr::case_when(
                     IfromF == 0 ~ log_zero_daily_count,
                     TRUE ~ log2(IfromF_daily)))
-  
+
   ## The SCI_F and SCI_M will be calculated for adults only (either males or females)
-  ## Juveniles are included in the with adult females 
+  ## Juveniles are included in the with adult females
   ## The juvenile SCI values will be calculated as the residual value to the adult female regression line
   ## Create a dataset to predict resuduals for juveniles
   full_OE <- my_subset[, c("sname", "age_group",  "SCI_class", "log2OE")]
-  
+
   my_subset$SCI_F_Dir <- my_subset$log2ItoF_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2ItoF_daily ~ log2OE),
                                                             newdata=full_OE[,"log2OE"])
   my_subset$SCI_F_Rec <- my_subset$log2IfromF_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2IfromF_daily ~ log2OE),
                                                               newdata=full_OE[,"log2OE"])
-  
-  
-  
+
+
+
   # Calculate variables for interactions with males only if:
   # - the interactions are grooming AND the focal animal is female OR
   # - the interactions are anything but grooming
   include_males <- interactions_l$act[[1]] != "G" | (interactions_l$act[[1]] == "G" & !(df$sex == "M" & df$age_group == "adult"))
-  
+
   if (include_males) {
     ## Interactions given to males by each actor of focal's sex
-    gg_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                            quo(actee_sex), my_role = "actor", my_sex = "M", 
+    gg_m <- get_interaction_dates(my_subset, members_l, interactions_l,
+                            quo(actee_sex), my_role = "actor", my_sex = "M",
                             my_class_var = quo(actee_age_group), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(ItoM = n())
-    
+
     ## Interactions received from males by each actee of focal's sex
-    gr_m <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                                  quo(actor_sex), my_role = "actee", my_sex = "M", 
+    gr_m <- get_interaction_dates(my_subset, members_l, interactions_l,
+                                  quo(actor_sex), my_role = "actee", my_sex = "M",
                                   my_class_var = quo(actor_age_group), my_class = "adult") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(IfromM = n())
-    
+
     my_subset <- my_subset %>%
       dplyr::left_join(gg_m, by = c("grp", "sname")) %>%
       dplyr::left_join(gr_m, by = c("grp", "sname"))
-    
+
     my_subset <- my_subset %>%
       tidyr::replace_na(list(ItoM = 0, IfromM = 0))
-    
+
     my_subset <- my_subset %>%
       dplyr::mutate(ItoM_daily = ItoM / days_present,
                     log2ItoM_daily = dplyr::case_when(
@@ -194,39 +194,39 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                     log2IfromM_daily = dplyr::case_when(
                       IfromM == 0 ~ log_zero_daily_count,
                       TRUE ~ log2(IfromM_daily)))
-    
+
     my_subset$SCI_M_Dir <- my_subset$log2ItoM_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2ItoM_daily ~ log2OE),
                                                               newdata=full_OE[,"log2OE"])
     my_subset$SCI_M_Rec <- my_subset$log2IfromM_daily - predict(lm(data=my_subset[my_subset$age_group == 'adult',], log2IfromM_daily ~ log2OE),
                                                                 newdata=full_OE[,"log2OE"])
     }
-  
+
   # Calculate variables for interactions with juveniles only if:
   # - the focal is a juvenile
   include_juveniles <- df$age_group == "juvenile"
-  
+
   if (include_juveniles) {
     ## Interactions given to females by each actor of focal's sex
-    gg_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                                  quo(actee_sex), my_role = "actor", my_sex = c("F","M"), 
+    gg_j <- get_interaction_dates(my_subset, members_l, interactions_l,
+                                  quo(actee_sex), my_role = "actor", my_sex = c("F","M"),
                                   my_class_var = quo(actee_age_group), my_class = "juvenile") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(ItoJ = n())
-    
+
     ## Interactions received from females by each actee of focal's sex
-    gr_j <- get_interaction_dates(my_subset, members_l, interactions_l, 
-                                  quo(actor_sex), my_role = "actee", my_sex = c("F","M"), 
+    gr_j <- get_interaction_dates(my_subset, members_l, interactions_l,
+                                  quo(actor_sex), my_role = "actee", my_sex = c("F","M"),
                                   my_class_var = quo(actor_age_group), my_class = "juvenile") %>%
       dplyr::group_by(grp, sname) %>%
       dplyr::summarise(IfromJ = n())
-    
+
       my_subset <- my_subset %>%
         dplyr::left_join(gg_j, by = c("grp", "sname")) %>%
         dplyr::left_join(gr_j, by = c("grp", "sname"))
-  
+
       my_subset <- my_subset %>%
         tidyr::replace_na(list(ItoJ = 0, IfromJ = 0))
-      
+
       my_subset <- my_subset %>%
         dplyr::mutate(ItoJ_daily = ItoJ / days_present,
                       log2ItoJ_daily = dplyr::case_when(
@@ -236,7 +236,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
                       log2IfromJ_daily = dplyr::case_when(
                         IfromJ == 0 ~ log_zero_daily_count,
                         TRUE ~ log2(IfromJ_daily)))
-      
+
       my_subset$SCI_J_Dir <- my_subset$log2ItoJ_daily - predict(lm(data=my_subset[my_subset$age_group == 'juvenile',], log2ItoJ_daily ~ log2OE),
                                                                 newdata=full_OE[,"log2OE"])
       my_subset$SCI_J_Rec <- my_subset$log2IfromJ_daily - predict(lm(data=my_subset[my_subset$age_group == 'juvenile',], log2IfromJ_daily ~ log2OE),
@@ -465,18 +465,18 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
                               directional) {
 
   # Find and return all co-residence dates for focal_sname and partner_sname in my_members
-  get_overlap_dates <- function(focal_sname, partner_sname, 
+  get_overlap_dates <- function(focal_sname, partner_sname,
                                 focal_grp, partner_grp,
                                 focal_age_group, partner_age_group) {
 
     focal_dates <- my_members %>%
-      dplyr::filter(sname == focal_sname & 
+      dplyr::filter(sname == focal_sname &
                       grp == focal_grp &
                       age_group == focal_age_group) %>%
       dplyr::pull(date)
 
     partner_dates <- my_members %>%
-      dplyr::filter(sname == partner_sname & 
+      dplyr::filter(sname == partner_sname &
                       grp == partner_grp &
                       age_group == partner_age_group) %>%
       dplyr::pull(date)
@@ -562,17 +562,17 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
       dplyr::summarise(days_present = n(),
                        start = min(date),
                        end = max(date))
-    
+
     ## We only need juvenile data for the focal if its juvenile
     my_subset <- my_subset %>% mutate(focal = sname == my_focal & grp == grp) %>%
       filter(focal == TRUE | age_group == "adult")
-    
-    
+
+
   }
   dyads <- my_subset %>%
     dplyr::mutate(partner = list(my_subset$sname[my_subset$sname != sname])) %>%
     tidyr::unnest()
-  
+
   # Get sex and grp of partner
   # Remove dyads not in same groups
   dyads <- dyads %>%
@@ -581,17 +581,17 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
                                     partner_age_group = age_group),
                       by = "partner") %>%
     dplyr::filter(grp == partner_grp)
-  
-  
+
+
   # Note that the step above created duplicated dyads
   # e.g., sname A and partner B, sname B and partner A
   # If DSI is symmetric, these can be removed
   # That's true here, so remove duplicate dyads
   my_subset <- dyads %>%
-    dplyr::rowwise() %>% 
-    unite(temp1, sname, age_group, remove = FALSE) %>% 
-    unite(temp2, partner, partner_age_group, remove = FALSE)  %>% 
-    dplyr::mutate(tmp = paste(grp, sort(c(temp1, temp2)), collapse = ' ')) %>%  
+    dplyr::rowwise() %>%
+    unite(temp1, sname, age_group, remove = FALSE) %>%
+    unite(temp2, partner, partner_age_group, remove = FALSE)  %>%
+    dplyr::mutate(tmp = paste(grp, sort(c(temp1, temp2)), collapse = ' ')) %>%
     dplyr::distinct(tmp, .keep_all = TRUE) %>%
     dplyr::select(-tmp, -temp1, -temp2) %>%
     dplyr::ungroup()
@@ -664,7 +664,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
 
     # Classify dyads by dyad type ("F-F", "F-M", or "M-M"), and nest by dyad type
     # Since this is not directional, "F-M" and "M-F" are combined into one category: F-M
-    my_subset <- 
+    my_subset <-
       my_subset %>%
       dplyr::rowwise() %>%
         dplyr::mutate(SCI_class = dplyr::if_else(sname_sex == 'F' | age_group == 'juvenile', "AFandJ", "AM")) %>%
@@ -674,7 +674,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
         dplyr::ungroup() %>%
         dplyr::group_by(dyad_type) %>%
         tidyr::nest()
-    
+
     # Fit regression separately for the two dyad types and get residuals
     my_subset <- my_subset %>%
       dplyr::mutate(data = purrr::map(data, fit_dyadic_regression))  %>%
@@ -768,7 +768,7 @@ fit_dyadic_regression <- function(df) {
   }
   else {
     full_OE <- df[, c("sname", "age_group",  "SCI_class", "log2OE")]
-    
+
     df$res_i_adj <- df$log2_i_adj -  predict(lm(data = df[df$age_group == 'adult',], log2_i_adj ~ log2OE),
                                              newdata=full_OE[,"log2OE"])
     #df$res_i_adj <- as.numeric(residuals(lm(data = df, log2_i_adj ~ log2OE)))
@@ -855,14 +855,38 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest()
 
   di_strength <- df %>%
-    dplyr::select(-top_partners, -r_quantity, -r_reciprocity) %>%
+    dplyr::select(-top_partners, -top_partners_mom_excluded,
+                  -r_quantity, -r_quantity_mom_excluded,
+                  -r_reciprocity, -r_reciprocity_mom_excluded,
+                  -r_strength_mom_excluded)%>%
+    tidyr::unnest() %>%
+    dplyr::select(-n)
+
+  di_strength_mom_excluded <- df %>%
+    dplyr::select(-top_partners, -top_partners_mom_excluded,
+                  -r_quantity, -r_quantity_mom_excluded,
+                  -r_reciprocity, -r_reciprocity_mom_excluded,
+                  -r_strength)%>%
     tidyr::unnest() %>%
     dplyr::select(-n)
 
   di_recip <- df %>%
-    dplyr::select(-top_partners, -r_quantity, -r_strength) %>%
+    dplyr::select(-top_partners, -top_partners_mom_excluded,
+                  -r_quantity, -r_quantity_mom_excluded,
+                  -r_reciprocity_mom_excluded,
+                  -r_strength, -r_strength_mom_excluded)%>%
+
     tidyr::unnest() %>%
     dplyr::select(-n)
+
+  # di_recip_mom_exlcuded <- df %>%
+  #   dplyr::select(-top_partners, -top_partners_mom_excluded,
+  #                 -r_quantity, -r_quantity_mom_excluded,
+  #                 -r_reciprocity,
+  #                 -r_strength, -r_strength_mom_excluded)%>%
+  #
+  #   tidyr::unnest() %>%
+  #   dplyr::select(-n)
 
   if (directional) {
     di_strength <- di_strength %>%
@@ -912,13 +936,25 @@ dyadic_index_summary <- function(df) {
         SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "DSI_M",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F")) %>%# ,
-    #     sex = forcats::fct_recode(sex, Male = "M", Female = "F")) 
+    #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
       dplyr::select(-dyad_type) %>%
       tidyr::spread(DSI_type, r_strength) %>%
       dplyr::select(sname, grp, start, end, DSI_F, DSI_M)
 
+    di_strength_mom_excluded <- di_strength_mom_excluded %>%
+      dplyr::mutate(DSI_type = case_when(
+        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
+        SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_mom_excluded")) %>%#
+      #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
+      dplyr::select(-dyad_type) %>%
+      tidyr::spread(DSI_type, r_strength) %>%
+      dplyr::select(sname, grp, start, end, DSI_F_mom_excluded)
+
     di_quantity <- df %>%
-      dplyr::select(-top_partners, -r_strength, -r_reciprocity) %>%
+      dplyr::select(-top_partners, -top_partners_mom_excluded,
+                    -r_strength, -r_strength_mom_excluded,
+                    -r_reciprocity, -r_reciprocity_mom_excluded,
+                    -r_quantity_mom_excluded) %>%
       tidyr::unnest() %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
@@ -937,17 +973,19 @@ dyadic_index_summary <- function(df) {
          SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "recip_F",
          SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "recip_M",
          SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "recip_F")) %>% # ,
-       #     sex = forcats::fct_recode(sex, Male = "M", Female = "F")) 
+       #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
        dplyr::select(-dyad_type) %>%
        tidyr::spread(DSI_type, r_reciprocity) %>%
        dplyr::select(sname, grp, start, end, recip_F, recip_M)
   }
 
   di_summary <- df %>%
-    dplyr::select(-top_partners, -starts_with("r_")) %>%
+    dplyr::select(-starts_with("r_")) %>%
     dplyr::left_join(di_strength, by = c("sname", "grp", "start", "end")) %>%
+    dplyr::left_join(di_strength_mom_excluded, by = c("sname", "grp", "start", "end")) %>%
     dplyr::left_join(di_quantity, by = c("sname", "grp", "start", "end")) %>%
     dplyr::left_join(di_recip, by = c("sname", "grp", "start", "end"))
+
 
   return(di_summary)
 }
@@ -972,6 +1010,9 @@ dyadic_row_summary <- function(df, focal, directional) {
   if (nrow(df) == 0) {
     return(dplyr::tbl_df(NULL))
   }
+
+  df <- df %>%
+    left_join(family_members_long, by = c("sname", "partner"))
 
   # Reciprocity is the mean of interaction asymmetry for the top three partners
   if (directional) {
@@ -1013,9 +1054,22 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::count(bond_strength) %>%
       tidyr::spread(bond_strength, n)
 
+    # r_quantity_mom_excluded <- df %>%
+    #   filter(role != 'mom') %>%
+    #   dplyr::group_by(dyad_type) %>%
+    #   dplyr::count(bond_strength) %>%
+    #   tidyr::spread(bond_strength, n)
+
     # Top partners are the top three interaction partners
     # This is calculated separately for each dyad type
     top_partners <- df %>%
+      dplyr::filter(res_i_adj > -9999) %>%
+      dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
+      dplyr::group_by(dyad_type) %>%
+      dplyr::slice(1:3)
+
+    top_partners_mom_excluded <- df %>%
+      filter(role != 'mom') %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
       dplyr::group_by(dyad_type) %>%
@@ -1028,17 +1082,33 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
+    r_strength_mom_excluded  <- top_partners_mom_excluded %>%
+      dplyr::filter(res_i_adj > -9999) %>%
+      dplyr::group_by(dyad_type) %>%
+      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
+                       n = n())
+
     r_reciprocity <- top_partners %>%
       dplyr::mutate(recip = 1 - abs((i_given - i_received) / (i_given + i_received))) %>%
       dplyr::group_by(dyad_type) %>%
       dplyr::summarise(r_reciprocity = mean(recip, na.rm = TRUE),
                        n = n())
+
+    # r_reciprocity_mom_excluded <- top_partners_mom_excluded %>%
+    #   dplyr::mutate(recip = 1 - abs((i_given - i_received) / (i_given + i_received))) %>%
+    #   dplyr::group_by(dyad_type) %>%
+    #   dplyr::summarise(r_reciprocity = mean(recip, na.rm = TRUE),
+    #                    n = n())
   }
 
   res <- tibble(top_partners = list(top_partners),
+                top_partners_mom_excluded = list(top_partners_mom_excluded),
                 r_quantity = list(r_quantity),
+                r_quantity_mom_excluded = list(r_quantity_mom_excluded),
                 r_strength = list(r_strength),
-                r_reciprocity = list(r_reciprocity))
+                r_strength_mom_excluded = list(r_strength_mom_excluded),
+                r_reciprocity = list(r_reciprocity),
+                r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded))
 
   return(res)
 }
