@@ -39,7 +39,7 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- groom_dates %>%
-<<<<<<< HEAD
+
     dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
 
   # Take set difference and calculate summary
@@ -47,15 +47,14 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
     dplyr::setdiff(remove_rows) %>%
     dplyr::select(sname, grp, date, iid)
   #
-=======
+
     dplyr::anti_join(members_l, by = c("sname", "age_group", "grp", "date"))
-  
+
   # Take set difference and calculate summary
   groom_dates <- groom_dates %>%
     dplyr::setdiff(remove_rows) %>%
     dplyr::select(sname, age_group, grp, date, iid)
-  # 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
+
   return(groom_dates)
 }
 
@@ -104,7 +103,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 
 =======
     left_join(obs_days, by = c("sname", "grp", "age_group"))
-  
+
 >>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_focals <- my_focals %>%
     dplyr::group_by(grp, age_group, sname) %>%
@@ -124,7 +123,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 =======
     dplyr::left_join(my_focals, by = c("grp", "age_group", "sname")) %>%
     dplyr::left_join(my_females, by = c("grp", "age_group", "sname"))
-  
+
 >>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   if (nrow(my_subset) == 0 | nrow(my_focals) == 0 | nrow(my_females) == 0) {
     return(dplyr::tbl_df(NULL))
@@ -159,7 +158,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 =======
     dplyr::left_join(gg_f, by = c("grp", "age_group", "sname")) %>%
     dplyr::left_join(gr_f, by = c("grp", "age_group", "sname"))
-  
+
 >>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_subset <- my_subset %>%
     tidyr::replace_na(list(ItoF = 0, IfromF = 0))
@@ -216,7 +215,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 =======
       dplyr::left_join(gg_m, by = c("grp", "age_group", "sname")) %>%
       dplyr::left_join(gr_m, by = c("grp", "age_group", "sname"))
-    
+
 >>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
     my_subset <- my_subset %>%
       tidyr::replace_na(list(ItoM = 0, IfromM = 0))
@@ -264,7 +263,7 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 =======
         dplyr::left_join(gg_j, by = c("grp", "age_group", "sname")) %>%
         dplyr::left_join(gr_j, by = c("grp", "age_group", "sname"))
-  
+
 >>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
       my_subset <- my_subset %>%
         tidyr::replace_na(list(ItoJ = 0, IfromJ = 0))
@@ -551,13 +550,15 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   }
 
   # Return grooming by actor to actee during co-residence dates
-  get_interactions <- function(my_actor, my_actee, focal_grp, partner_grp) {
+  get_interactions <- function(my_actor, my_actee, focal_grp, partner_grp, my_age_group, partner_age_group) {
 
     res <- my_interactions %>%
-      dplyr::filter(actor == my_actor & actor_grp == focal_grp & actee == my_actee & actee_grp == partner_grp)
+      dplyr::filter(actor == my_actor & actor_grp == focal_grp & actor_age_group == my_age_group &
+                    actee == my_actee & actee_grp == partner_grp & actee_age_group == partner_age_group)
 
     return(nrow(res))
   }
+
   my_focal <- df$sname
   my_grp <- df$grp
   my_sname <- df$sname
@@ -691,9 +692,9 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   # i_given is behavior given by sname to partner
   # i_received is behavior received by sname from partner
   my_subset <- my_subset %>%
-    dplyr::mutate(i_given = purrr::pmap_dbl(list(sname, partner, grp, partner_grp),
+    dplyr::mutate(i_given = purrr::pmap_dbl(list(sname, partner, grp, partner_grp, age_group, partner_age_group),
                                      get_interactions),
-           i_received = purrr::pmap_dbl(list(partner, sname, partner_grp, grp),
+           i_received = purrr::pmap_dbl(list(partner, sname, partner_grp, grp,  partner_age_group, age_group),
                                         get_interactions),
            i_total = i_given + i_received)
 
