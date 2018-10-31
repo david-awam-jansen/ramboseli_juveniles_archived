@@ -15,18 +15,8 @@ get_mem_dates <- function(my_sub, members_l, df, sel = NULL) {
     dplyr::select(sname, grp, age_group, date, !!sel)
 
   return(mem_dates)
-<<<<<<< HEAD
 
-
-  gr_f <- get_interaction_dates(my_subset, members_l, interactions_l,
-                                quo(actor_sex), "actee", "F") %>%
-    dplyr::group_by(grp, sname) %>%
-    dplyr::summarise(IfromF = n())
-
-=======
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
 }
-
 
 get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my_sex, my_class_var, my_class="adult") {
 
@@ -98,13 +88,8 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     summarise(days_observed = n())
 
   my_subset <- my_subset %>%
-<<<<<<< HEAD
-    left_join(obs_days, by = c("sname", "grp"))
-
-=======
     left_join(obs_days, by = c("sname", "grp", "age_group"))
 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_focals <- my_focals %>%
     dplyr::group_by(grp, age_group, sname) %>%
     dplyr::summarise(n_focals = sum(sum))
@@ -116,15 +101,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
 
   # Join back to my_subset to add n_focals column
   my_subset <- my_subset %>%
-<<<<<<< HEAD
-    dplyr::left_join(my_focals, by = c("grp", "sname")) %>%
-    dplyr::left_join(my_females, by = c("grp", "sname"))
-
-=======
     dplyr::left_join(my_focals, by = c("grp", "age_group", "sname")) %>%
     dplyr::left_join(my_females, by = c("grp", "age_group", "sname"))
 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   if (nrow(my_subset) == 0 | nrow(my_focals) == 0 | nrow(my_females) == 0) {
     return(dplyr::tbl_df(NULL))
   }
@@ -151,15 +130,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
     dplyr::summarise(IfromF = n())
 
   my_subset <- my_subset %>%
-<<<<<<< HEAD
-    dplyr::left_join(gg_f, by = c("grp", "sname")) %>%
-    dplyr::left_join(gr_f, by = c("grp", "sname"))
-
-=======
     dplyr::left_join(gg_f, by = c("grp", "age_group", "sname")) %>%
     dplyr::left_join(gr_f, by = c("grp", "age_group", "sname"))
 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
   my_subset <- my_subset %>%
     tidyr::replace_na(list(ItoF = 0, IfromF = 0))
 
@@ -208,15 +181,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
       dplyr::summarise(IfromM = n())
 
     my_subset <- my_subset %>%
-<<<<<<< HEAD
-      dplyr::left_join(gg_m, by = c("grp", "sname")) %>%
-      dplyr::left_join(gr_m, by = c("grp", "sname"))
-
-=======
       dplyr::left_join(gg_m, by = c("grp", "age_group", "sname")) %>%
       dplyr::left_join(gr_m, by = c("grp", "age_group", "sname"))
 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
     my_subset <- my_subset %>%
       tidyr::replace_na(list(ItoM = 0, IfromM = 0))
 
@@ -256,15 +223,9 @@ get_sci_subset <- function(df, members_l, focals_l, females_l, interactions_l,
       dplyr::summarise(IfromJ = n())
 
       my_subset <- my_subset %>%
-<<<<<<< HEAD
-        dplyr::left_join(gg_j, by = c("grp", "sname")) %>%
-        dplyr::left_join(gr_j, by = c("grp", "sname"))
-
-=======
         dplyr::left_join(gg_j, by = c("grp", "age_group", "sname")) %>%
         dplyr::left_join(gr_j, by = c("grp", "age_group", "sname"))
 
->>>>>>> c49d9941390086cc80cb1b4dca14e5cd78944ae0
       my_subset <- my_subset %>%
         tidyr::replace_na(list(ItoJ = 0, IfromJ = 0))
 
