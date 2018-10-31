@@ -1,8 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.Rdata
+.RDS
+.csv
 .Ruserdata
-
-\.DS_Store
-
-data/
