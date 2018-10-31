@@ -1110,11 +1110,12 @@ dyadic_row_summary <- function(df, focal, directional) {
   res <- tibble(top_partners = list(top_partners),
                 top_partners_mom_excluded = list(top_partners_mom_excluded),
                 r_quantity = list(r_quantity),
-                r_quantity_mom_excluded = list(r_quantity_mom_excluded),
+                #r_quantity_mom_excluded = list(r_quantity_mom_excluded),
                 r_strength = list(r_strength),
                 r_strength_mom_excluded = list(r_strength_mom_excluded),
                 r_reciprocity = list(r_reciprocity),
-                r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded))
+                #r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded)
+                )
 
   return(res)
 }
