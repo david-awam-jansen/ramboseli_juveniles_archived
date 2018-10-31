@@ -846,6 +846,8 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
+  message("This is the updated dsi code. 31OCT18 10:58")
+
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
   for (i in 1:nrow(df)) {
