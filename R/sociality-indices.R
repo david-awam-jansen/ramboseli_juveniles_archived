@@ -984,29 +984,27 @@ dyadic_index_summary <- function(df) {
 
     message("The di_strength_mom_excluded step 2 is done")
 
-    return(df)
-
-    # di_quantity <- df %>%
-    #   dplyr::select( -top_partners
-    #                  #,-r_quantity
-    #                  ,-r_strength
-    #                  -r_reciprocity
-    #                  ,-top_partners_mom_excluded
-    #                  #,-r_quantity_mom_excluded
-    #                  ,-r_strength_mom_excluded
-    #                  #,-r_reciprocity_mom_excluded
-    #                  ) %>%
-    #   tidyr::unnest() %>%
-    #   dplyr::mutate(DSI_type = case_when(
-    #     SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
-    #     SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "F",
-    #     SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "M",
-    #     SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "F")) %>%
-    #   dplyr::select(-dyad_type) %>%
-    #   tidyr::gather(bond_cat, n_bonds, contains("Bonded")) %>%
-    #   tidyr::unite(var, bond_cat, DSI_type) %>%
-    #   tidyr::spread(var, n_bonds, fill = 0) %>%
-    #   dplyr::select(sname, grp, start, end, ends_with("_M"), ends_with("_F"))
+    di_quantity <- df %>%
+      dplyr::select( -top_partners
+                     #,-r_quantity
+                     ,-r_strength
+                     ,-r_reciprocity
+                     ,-top_partners_mom_excluded
+                     #,-r_quantity_mom_excluded
+                     ,-r_strength_mom_excluded
+                     #,-r_reciprocity_mom_excluded
+                     ) %>%
+      tidyr::unnest() %>%
+      dplyr::mutate(DSI_type = case_when(
+        SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
+        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "F",
+        SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "M",
+        SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "F")) %>%
+      dplyr::select(-dyad_type) %>%
+      tidyr::gather(bond_cat, n_bonds, contains("Bonded")) %>%
+      tidyr::unite(var, bond_cat, DSI_type) %>%
+      tidyr::spread(var, n_bonds, fill = 0) %>%
+      dplyr::select(sname, grp, start, end, ends_with("_M"), ends_with("_F"))
 
     message("The di_quantity is done")
 
@@ -1034,7 +1032,7 @@ dyadic_index_summary <- function(df) {
     message("The di_summary is done")
 
 
-  #return(di_summary)
+  return(di_summary)
 }
 
 
