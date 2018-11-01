@@ -847,7 +847,6 @@ dyadic_index_summary <- function(df) {
   directional <- attr(df, "directional")
 
   message("This is the updated dsi code. 1NOV18 14:15 mom's are are now excluded in DSI_F_mom_excluded")
-  message(print(directional))
 
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
@@ -856,6 +855,7 @@ dyadic_index_summary <- function(df) {
     setTxtProgressBar(pb, i)
   }
   close(pb)
+  message("The dyadic_row_summary is done")
 
   df <- df %>%
     dplyr::select(-subset, -di) %>%
@@ -874,6 +874,7 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest() %>%
     dplyr::select(-n)
 
+  message("The di_strength is done")
   di_strength_mom_excluded <- df %>%
     dplyr::select( -top_partners
                    ,-r_quantity
@@ -887,6 +888,8 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest() %>%
     dplyr::select(-n)
 
+  message("The di_strength_mom_excluded is done")
+
   di_recip <- df %>%
     dplyr::select( -top_partners
                    ,-r_quantity
@@ -899,6 +902,8 @@ dyadic_index_summary <- function(df) {
                    ) %>%
     tidyr::unnest() %>%
     dplyr::select(-n)
+
+  message("The di_recip is done")
 
   # di_recip_mom_exlcuded <- df %>%
   #   dplyr::select( -top_partners
@@ -966,6 +971,8 @@ dyadic_index_summary <- function(df) {
       tidyr::spread(DSI_type, r_strength) %>%
       dplyr::select(sname, grp, start, end, DSI_F, DSI_M)
 
+    message("The di_strength step 2 is done")
+
     di_strength_mom_excluded <- di_strength_mom_excluded %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
@@ -974,6 +981,8 @@ dyadic_index_summary <- function(df) {
       dplyr::select(-dyad_type) %>%
       tidyr::spread(DSI_type, r_strength_mom_excluded) %>%
       dplyr::select(sname, grp, start, end, DSI_F_mom_excluded)
+
+    message("The di_strength_mom_excluded step 2 is done")
 
     di_quantity <- df %>%
       dplyr::select( -top_partners
@@ -997,6 +1006,8 @@ dyadic_index_summary <- function(df) {
       tidyr::spread(var, n_bonds, fill = 0) %>%
       dplyr::select(sname, grp, start, end, ends_with("_M"), ends_with("_F"))
 
+    message("The di_quantity is done")
+
      di_recip <- di_recip %>%
        dplyr::mutate(DSI_type = case_when(
          SCI_class == "AM" & dyad_type == "AM-AM" ~ "recip_M",  # check
@@ -1007,6 +1018,8 @@ dyadic_index_summary <- function(df) {
        dplyr::select(-dyad_type) %>%
        tidyr::spread(DSI_type, r_reciprocity) %>%
        dplyr::select(sname, grp, start, end, recip_F, recip_M)
+
+     message("The di_recip is done")
   }
 
   di_summary <- df %>%
@@ -1015,6 +1028,8 @@ dyadic_index_summary <- function(df) {
     dplyr::left_join(di_strength_mom_excluded, by = c("sname", "grp", "start", "end")) %>%
     dplyr::left_join(di_quantity, by = c("sname", "grp", "start", "end"))
     dplyr::left_join(di_recip, by = c("sname", "grp", "start", "end"))
+
+    message("The di_summary is done")
 
 
   return(di_summary)
