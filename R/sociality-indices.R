@@ -846,7 +846,7 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
-  message("This is the updated dsi code. 1NOV18 12:34")
+  message("This is the updated dsi code. 1NOV18 12:55 mom's are not excluded")
   message(print(directional))
 
   df$di_sum <- list(NULL)
@@ -862,22 +862,32 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest()
 
   di_strength <- df %>%
-    dplyr::select(-top_partners, -top_partners_mom_excluded, -r_quantity, -r_reciprocity, -r_strength_mom_excluded) %>%
+    dplyr::select(-top_partners
+                  #, -top_partners_mom_excluded
+                  , -r_quantity
+                  , -r_reciprocity
+                  #, -r_strength_mom_excluded
+                  ) %>%
     tidyr::unnest() %>%
     dplyr::select(-n)
 
-  di_strength_mom_excluded <- df %>%
-    dplyr::select(-top_partners, -top_partners_mom_excluded,
-                  -r_quantity,
-                  -r_reciprocity,
-                  -r_strength)%>%
-    tidyr::unnest() %>%
-    dplyr::select(-n)
+  # di_strength_mom_excluded <- df %>%
+  #   dplyr::select(-top_partners
+  #                 #, -top_partners_mom_excluded
+  #                 , -r_quantity
+  #                 , -r_reciprocity
+  #                 , -r_strength
+  #                 )%>%
+  #   tidyr::unnest() %>%
+  #   dplyr::select(-n)
 
   di_recip <- df %>%
-    dplyr::select(-top_partners, -top_partners_mom_excluded,
-                  -r_quantity, -
-                  -r_strength, -r_strength_mom_excluded)%>%
+    dplyr::select(-top_partners
+                  #, -top_partners_mom_excluded
+                  , -r_quantity
+                  , -r_strength
+                  #, -r_strength_mom_excluded
+                  )%>%
 
     tidyr::unnest() %>%
     dplyr::select(-n)
@@ -944,19 +954,21 @@ dyadic_index_summary <- function(df) {
       tidyr::spread(DSI_type, r_strength) %>%
       dplyr::select(sname, grp, start, end, DSI_F, DSI_M)
 
-    di_strength_mom_excluded <- di_strength_mom_excluded %>%
-      dplyr::mutate(DSI_type = case_when(
-        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
-        SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_mom_excluded")) %>%#
-      #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
-      dplyr::select(-dyad_type) %>%
-      tidyr::spread(DSI_type, r_strength) %>%
-      dplyr::select(sname, grp, start, end, DSI_F_mom_excluded)
+    # di_strength_mom_excluded <- di_strength_mom_excluded %>%
+    #   dplyr::mutate(DSI_type = case_when(
+    #     SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
+    #     SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_mom_excluded")) %>%#
+    #   #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
+    #   dplyr::select(-dyad_type) %>%
+    #   tidyr::spread(DSI_type, r_strength) %>%
+    #   dplyr::select(sname, grp, start, end, DSI_F_mom_excluded)
 
     di_quantity <- df %>%
-      dplyr::select(-top_partners, -top_partners_mom_excluded,
-                    -r_strength, -r_strength_mom_excluded,
-                    -r_reciprocity) %>%
+      dplyr::select(-top_partners
+                    #, -top_partners_mom_excluded
+                    , -r_strength
+                    #, -r_strength_mom_excluded
+                    , -r_reciprocity) %>%
       tidyr::unnest() %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
@@ -984,7 +996,7 @@ dyadic_index_summary <- function(df) {
   di_summary <- df %>%
     dplyr::select(-starts_with("r_")) %>%
     dplyr::left_join(di_strength, by = c("sname", "grp", "start", "end")) %>%
-    dplyr::left_join(di_strength_mom_excluded, by = c("sname", "grp", "start", "end")) %>%
+    #dplyr::left_join(di_strength_mom_excluded, by = c("sname", "grp", "start", "end")) %>%
     dplyr::left_join(di_quantity, by = c("sname", "grp", "start", "end"))
     #dplyr::left_join(di_recip, by = c("sname", "grp", "start", "end"))
 
@@ -1070,12 +1082,12 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::group_by(dyad_type) %>%
       dplyr::slice(1:3)
 
-    top_partners_mom_excluded <- df %>%
-      filter(role != 'mom') %>%
-      dplyr::filter(res_i_adj > -9999) %>%
-      dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
-      dplyr::group_by(dyad_type) %>%
-      dplyr::slice(1:3)
+    # top_partners_mom_excluded <- df %>%
+    #   filter(role != 'mom') %>%
+    #   dplyr::filter(res_i_adj > -9999) %>%
+    #   dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
+    #   dplyr::group_by(dyad_type) %>%
+    #   dplyr::slice(1:3)
 
     # Relationship strength is the mean of the index value for the top three partners
     r_strength <- top_partners %>%
@@ -1084,11 +1096,11 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
-    r_strength_mom_excluded  <- top_partners_mom_excluded %>%
-      dplyr::filter(res_i_adj > -9999) %>%
-      dplyr::group_by(dyad_type) %>%
-      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
-                       n = n())
+    # r_strength_mom_excluded  <- top_partners_mom_excluded %>%
+    #   dplyr::filter(res_i_adj > -9999) %>%
+    #   dplyr::group_by(dyad_type) %>%
+    #   dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
+    #                    n = n())
 
     r_reciprocity <- top_partners %>%
       dplyr::mutate(recip = 1 - abs((i_given - i_received) / (i_given + i_received))) %>%
@@ -1104,11 +1116,11 @@ dyadic_row_summary <- function(df, focal, directional) {
   }
 
   res <- tibble(top_partners = list(top_partners),
-                top_partners_mom_excluded = list(top_partners_mom_excluded),
+                #top_partners_mom_excluded = list(top_partners_mom_excluded),
                 r_quantity = list(r_quantity),
                 #r_quantity_mom_excluded = list(r_quantity_mom_excluded),
                 r_strength = list(r_strength),
-                r_strength_mom_excluded = list(r_strength_mom_excluded),
+                #r_strength_mom_excluded = list(r_strength_mom_excluded),
                 r_reciprocity = list(r_reciprocity)
                 #r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded)
                 )
