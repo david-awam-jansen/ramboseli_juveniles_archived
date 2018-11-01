@@ -1025,8 +1025,8 @@ dyadic_row_summary <- function(df, focal, directional) {
     return(dplyr::tbl_df(NULL))
   }
 
-  # df <- df %>%
-  #   left_join(family_members_long, by = c("sname", "partner"))
+  df <- df %>%
+     left_join(family_members_long, by = c("sname", "partner"))
 
   # Reciprocity is the mean of interaction asymmetry for the top three partners
   if (directional) {
