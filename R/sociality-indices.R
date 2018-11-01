@@ -846,7 +846,7 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
-  message("This is the updated dsi code. 1NOV18 11:50")
+  message("This is the updated dsi code. 1NOV18 12:34")
   message(print(directional))
 
   df$di_sum <- list(NULL)
@@ -936,9 +936,9 @@ dyadic_index_summary <- function(df) {
     di_strength <- di_strength %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "DSI_M",  # check
-        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_all",
+        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "DSI_M",
-        SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_all")) %>%# ,
+        SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F")) %>%# ,
     #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
       dplyr::select(-dyad_type) %>%
       tidyr::spread(DSI_type, r_strength) %>%
