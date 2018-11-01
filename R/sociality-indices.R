@@ -852,7 +852,7 @@ dyadic_index_summary <- function(df) {
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
   for (i in 1:nrow(df)) {
-    df[i, ]$di_sum <- list(dyadic_row_summary(df$di[[i]], df$sname[[i]], directional))
+    df[i, ]$di_sum <- list(ramboseli::dyadic_row_summary(df$di[[i]], df$sname[[i]], directional))
     setTxtProgressBar(pb, i)
   }
   close(pb)
@@ -900,18 +900,18 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest() %>%
     dplyr::select(-n)
 
-  di_recip_mom_exlcuded <- df %>%
-    dplyr::select( -top_partners
-                   ,-r_quantity
-                   ,-r_strength
-                   ,-r_reciprocity
-                   ,-top_partners_mom_excluded
-                   #,-r_quantity_mom_excluded
-                   ,-r_strength_mom_excluded
-                   #,-r_reciprocity_mom_excluded
-                   ) %>%
-    tidyr::unnest() %>%
-    dplyr::select(-n)
+  # di_recip_mom_exlcuded <- df %>%
+  #   dplyr::select( -top_partners
+  #                  ,-r_quantity
+  #                  ,-r_strength
+  #                  ,-r_reciprocity
+  #                  ,-top_partners_mom_excluded
+  #                  #,-r_quantity_mom_excluded
+  #                  #,-r_strength_mom_excluded
+  #                  ,-r_reciprocity_mom_excluded
+  #                  ) %>%
+  #   tidyr::unnest() %>%
+  #   dplyr::select(-n)
 
   if (directional) {
     di_strength <- di_strength %>%
@@ -977,13 +977,13 @@ dyadic_index_summary <- function(df) {
 
     di_quantity <- df %>%
       dplyr::select( -top_partners
-                     ,-top_partners_mom_excluded
                      #,-r_quantity
-                     ,-r_quantity_mom_excluded
                      ,-r_strength
-                     ,-r_strength_mom_excluded
                      -r_reciprocity
-                     ,-r_reciprocity_mom_excluded
+                     ,-top_partners_mom_excluded
+                     #,-r_quantity_mom_excluded
+                     ,-r_strength_mom_excluded
+                     #,-r_reciprocity_mom_excluded
                      ) %>%
       tidyr::unnest() %>%
       dplyr::mutate(DSI_type = case_when(
@@ -1096,7 +1096,7 @@ dyadic_row_summary <- function(df, focal, directional) {
     r_strength <- top_partners %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::group_by(dyad_type) %>%
-      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
+      dplyr::summarise(r_strength_mom_excluded = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
     r_reciprocity <- top_partners %>%
