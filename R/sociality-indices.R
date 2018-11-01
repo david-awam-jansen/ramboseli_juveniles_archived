@@ -1111,7 +1111,7 @@ dyadic_row_summary <- function(df, focal, directional) {
     r_strength <- top_partners %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::group_by(dyad_type) %>%
-      dplyr::summarise(r_strength_mom_excluded = mean(res_i_adj, na.rm = TRUE),
+      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
     r_reciprocity <- top_partners %>%
@@ -1136,7 +1136,7 @@ dyadic_row_summary <- function(df, focal, directional) {
     r_strength_mom_excluded  <- top_partners_mom_excluded %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::group_by(dyad_type) %>%
-      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
+      dplyr::summarise(r_strength_mom_excluded = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
     r_reciprocity_mom_excluded <- top_partners_mom_excluded %>%
