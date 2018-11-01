@@ -1109,7 +1109,7 @@ dyadic_row_summary <- function(df, focal, directional) {
                 #r_quantity_mom_excluded = list(r_quantity_mom_excluded),
                 r_strength = list(r_strength),
                 r_strength_mom_excluded = list(r_strength_mom_excluded),
-                r_reciprocity = list(r_reciprocity),
+                r_reciprocity = list(r_reciprocity)
                 #r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded)
                 )
 
