@@ -863,12 +863,12 @@ dyadic_index_summary <- function(df) {
 
   di_strength <- df %>%
     dplyr::select( -top_partners
-                  ,-top_partners_mom_excluded
                   ,-r_quantity
-                 #,-r_quantity_mom_excluded
-#                  ,-r_strength
-                  ,-r_strength_mom_excluded
+                  #,-r_strength
                   ,-r_reciprocity
+                  ,-top_partners_mom_excluded
+                  #,-r_quantity_mom_excluded
+                  ,-r_strength_mom_excluded
                  #,-r_reciprocity_mom_excluded
                   ) %>%
     tidyr::unnest() %>%
@@ -876,25 +876,25 @@ dyadic_index_summary <- function(df) {
 
   di_strength_mom_excluded <- df %>%
     dplyr::select( -top_partners
-                   ,-top_partners_mom_excluded
                    ,-r_quantity
-                  #,-r_quantity_mom_excluded
                    ,-r_strength
-                  #,-r_strength_mom_excluded
                    ,-r_reciprocity
+                  ,-top_partners_mom_excluded
+                  #,-r_quantity_mom_excluded
+                  #,-r_strength_mom_excluded
                   #,-r_reciprocity_mom_excluded
-    ) %>%
+                  ) %>%
     tidyr::unnest() %>%
     dplyr::select(-n)
 
   di_recip <- df %>%
     dplyr::select( -top_partners
-                   ,-top_partners_mom_excluded
                    ,-r_quantity
-                   #,-r_quantity_mom_excluded
                    ,-r_strength
+                   #,-r_reciprocity
+                   ,-top_partners_mom_excluded
+                   #,-r_quantity_mom_excluded
                    ,-r_strength_mom_excluded
-                   #-r_reciprocity
                    #,-r_reciprocity_mom_excluded
                    ) %>%
     tidyr::unnest() %>%
@@ -902,12 +902,12 @@ dyadic_index_summary <- function(df) {
 
   di_recip_mom_exlcuded <- df %>%
     dplyr::select( -top_partners
-                   ,-top_partners_mom_excluded
                    ,-r_quantity
-                   #,-r_quantity_mom_excluded
                    ,-r_strength
+                   ,-r_reciprocity
+                   ,-top_partners_mom_excluded
+                   #,-r_quantity_mom_excluded
                    ,-r_strength_mom_excluded
-                   -r_reciprocity
                    #,-r_reciprocity_mom_excluded
                    ) %>%
     tidyr::unnest() %>%
@@ -1084,22 +1084,9 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::count(bond_strength) %>%
       tidyr::spread(bond_strength, n)
 
-    r_quantity_mom_excluded <- df %>%
-      filter(role != 'mom') %>%
-      dplyr::group_by(dyad_type) %>%
-      dplyr::count(bond_strength) %>%
-      tidyr::spread(bond_strength, n)
-
     # Top partners are the top three interaction partners
     # This is calculated separately for each dyad type
     top_partners <- df %>%
-      dplyr::filter(res_i_adj > -9999) %>%
-      dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
-      dplyr::group_by(dyad_type) %>%
-      dplyr::slice(1:3)
-
-    top_partners_mom_excluded <- df %>%
-      filter(role != 'mom') %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
       dplyr::group_by(dyad_type) %>%
@@ -1112,16 +1099,29 @@ dyadic_row_summary <- function(df, focal, directional) {
       dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
-    r_strength_mom_excluded  <- top_partners_mom_excluded %>%
-      dplyr::filter(res_i_adj > -9999) %>%
-      dplyr::group_by(dyad_type) %>%
-      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
-                       n = n())
-
     r_reciprocity <- top_partners %>%
       dplyr::mutate(recip = 1 - abs((i_given - i_received) / (i_given + i_received))) %>%
       dplyr::group_by(dyad_type) %>%
       dplyr::summarise(r_reciprocity = mean(recip, na.rm = TRUE),
+                       n = n())
+
+    r_quantity_mom_excluded <- df %>%
+      filter(role != 'mom') %>%
+      dplyr::group_by(dyad_type) %>%
+      dplyr::count(bond_strength) %>%
+      tidyr::spread(bond_strength, n)
+
+    top_partners_mom_excluded <- df %>%
+      filter(role != 'mom') %>%
+      dplyr::filter(res_i_adj > -9999) %>%
+      dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
+      dplyr::group_by(dyad_type) %>%
+      dplyr::slice(1:3)
+
+    r_strength_mom_excluded  <- top_partners_mom_excluded %>%
+      dplyr::filter(res_i_adj > -9999) %>%
+      dplyr::group_by(dyad_type) %>%
+      dplyr::summarise(r_strength = mean(res_i_adj, na.rm = TRUE),
                        n = n())
 
     r_reciprocity_mom_excluded <- top_partners_mom_excluded %>%
@@ -1131,12 +1131,14 @@ dyadic_row_summary <- function(df, focal, directional) {
                        n = n())
   }
 
-  res <- tibble(top_partners = list(top_partners),
-                top_partners_mom_excluded = list(top_partners_mom_excluded),
-                r_quantity = list(r_quantity),
-                r_strength = list(r_strength),
-                r_strength_mom_excluded = list(r_strength_mom_excluded),
-                r_reciprocity = list(r_reciprocity),
+  res <- tibble(top_partners = list(top_partners)
+                ,r_quantity = list(r_quantity)
+                ,r_strength = list(r_strength)
+                ,r_reciprocity = list(r_reciprocity)
+                ,top_partners_mom_excluded = list(top_partners_mom_excluded)
+                #,r_quantity_mom_excluded = list(r_quantity_mom_excluded)
+                ,r_strength_mom_excluded = list(r_strength_mom_excluded)
+                #,r_reciprocity_mom_excluded = list(r_reciprocity_mom_excluded)
                 )
 
   return(res)
