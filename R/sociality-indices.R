@@ -1058,7 +1058,7 @@ dyadic_row_summary <- function(df, focal, directional) {
 
   ##Adding family roles to the dyad data
   df <- df %>%
-    mutate(partner2  = dplyr::setdiff(c(sname1, partner), sname)) %>%
+    mutate(partner2  = dplyr::setdiff(c(sname, partner), focal)) %>%
     left_join(dplyr::select(family_members_long, sname, partner2 = partner, role), by = c("sname", "partner2")) %>%
     select(-partner2)
 
