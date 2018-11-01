@@ -846,7 +846,8 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
-  message("This is the updated dsi code. 31OCT18 10:58")
+  message("This is the updated dsi code. 1NOV18 10:13")
+  message(print(directional))
 
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
@@ -861,25 +862,21 @@ dyadic_index_summary <- function(df) {
     tidyr::unnest()
 
   di_strength <- df %>%
-    dplyr::select(-top_partners, -top_partners_mom_excluded,
-                  -r_quantity, -r_quantity_mom_excluded,
-                  -r_reciprocity, -r_reciprocity_mom_excluded,
-                  -r_strength_mom_excluded)%>%
+    dplyr::select(-top_partners, -top_partners_mom_excluded, -r_quantity, -r_reciprocity, -r_strength_mom_excluded) %>%
     tidyr::unnest() %>%
     dplyr::select(-n)
 
   di_strength_mom_excluded <- df %>%
     dplyr::select(-top_partners, -top_partners_mom_excluded,
-                  -r_quantity, -r_quantity_mom_excluded,
-                  -r_reciprocity, -r_reciprocity_mom_excluded,
+                  -r_quantity,
+                  -r_reciprocity,
                   -r_strength)%>%
     tidyr::unnest() %>%
     dplyr::select(-n)
 
   di_recip <- df %>%
     dplyr::select(-top_partners, -top_partners_mom_excluded,
-                  -r_quantity, -r_quantity_mom_excluded,
-                  -r_reciprocity_mom_excluded,
+                  -r_quantity, -
                   -r_strength, -r_strength_mom_excluded)%>%
 
     tidyr::unnest() %>%
@@ -959,8 +956,7 @@ dyadic_index_summary <- function(df) {
     di_quantity <- df %>%
       dplyr::select(-top_partners, -top_partners_mom_excluded,
                     -r_strength, -r_strength_mom_excluded,
-                    -r_reciprocity, -r_reciprocity_mom_excluded,
-                    -r_quantity_mom_excluded) %>%
+                    -r_reciprocity) %>%
       tidyr::unnest() %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
@@ -989,8 +985,8 @@ dyadic_index_summary <- function(df) {
     dplyr::select(-starts_with("r_")) %>%
     dplyr::left_join(di_strength, by = c("sname", "grp", "start", "end")) %>%
     dplyr::left_join(di_strength_mom_excluded, by = c("sname", "grp", "start", "end")) %>%
-    dplyr::left_join(di_quantity, by = c("sname", "grp", "start", "end")) %>%
-    dplyr::left_join(di_recip, by = c("sname", "grp", "start", "end"))
+    dplyr::left_join(di_quantity, by = c("sname", "grp", "start", "end"))
+    #dplyr::left_join(di_recip, by = c("sname", "grp", "start", "end"))
 
 
   return(di_summary)
