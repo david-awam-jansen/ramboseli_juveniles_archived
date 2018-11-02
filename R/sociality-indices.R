@@ -975,9 +975,11 @@ dyadic_index_summary <- function(df) {
 
     di_strength_mom_excluded <- di_strength_mom_excluded %>%
       dplyr::mutate(DSI_type = case_when(
+        SCI_class == "AM" & dyad_type == "AM-AM" ~ "DSI_M_check",  # check
         SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
+        SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "DSI_M_check",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_mom_excluded")) %>%#
-      #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
+        #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
       dplyr::select(-dyad_type) %>%
       tidyr::spread(DSI_type, r_strength_mom_excluded) %>%
       dplyr::select(sname, grp, start, end, DSI_F_mom_excluded)
