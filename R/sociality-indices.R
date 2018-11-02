@@ -1057,11 +1057,12 @@ dyadic_row_summary <- function(df, focal, directional) {
   }
 
   ##Adding family roles to the dyad data
-  df <- df %>%
-    mutate(partner2  = dplyr::setdiff(c(sname, partner), focal)) %>%
-    left_join(dplyr::select(family_members_long, sname, partner2 = partner, role), by = c("sname", "partner2")) %>%
-    select(-partner2)
-
+  df %>% select(sname, partner) %>%
+    mutate(sname2  = if_else(focal == sname, sname, partner)) %>%
+    mutate(partner2  = if_else(focal == sname, partner, sname)) %>%
+    left_join(dplyr::select(family_members_long, sname2 = sname, partner2 = partner, role), by = c("sname2", "partner2")) %>%
+    select(-sname2, -partner2) %>%
+    View()
 
   # Reciprocity is the mean of interaction asymmetry for the top three partners
   if (directional) {
