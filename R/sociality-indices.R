@@ -846,7 +846,7 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
-  message("This is the updated dsi code. 2NOV18 8:53 mom's are are now excluded in DSI_F_mom_excluded")
+  message("This is the updated dsi code. 2NOV18 10:45 mom's are are now excluded in DSI_F_mom_excluded")
 
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
@@ -1133,7 +1133,7 @@ dyadic_row_summary <- function(df, focal, directional) {
       tidyr::spread(bond_strength, n)
 
     top_partners_mom_excluded <- df %>%
-      filter(role != 'mom') %>%
+      filter(role != 'mom' | is.na(role)) %>%
       dplyr::filter(res_i_adj > -9999) %>%
       dplyr::arrange(dyad_type, desc(res_i_adj)) %>%
       dplyr::group_by(dyad_type) %>%
