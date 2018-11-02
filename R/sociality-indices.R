@@ -846,12 +846,12 @@ dyadic_index_summary <- function(df) {
 
   directional <- attr(df, "directional")
 
-  message("This is the updated dsi code. 1NOV18 14:15 mom's are are now excluded in DSI_F_mom_excluded")
+  message("This is the updated dsi code. 2NOV18 8:53 mom's are are now excluded in DSI_F_mom_excluded")
 
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
   for (i in 1:nrow(df)) {
-    df[i, ]$di_sum <- list(ramboseli::dyadic_row_summary(df$di[[i]], df$sname[[i]], directional))
+    df[i, ]$di_sum <- list(dyadic_row_summary(df$di[[i]], df$sname[[i]], directional))
     setTxtProgressBar(pb, i)
   }
   close(pb)
@@ -1057,12 +1057,13 @@ dyadic_row_summary <- function(df, focal, directional) {
   }
 
   ##Adding family roles to the dyad data
-  df %>% select(sname, partner) %>%
+  df <- df %>%
     mutate(sname2  = if_else(focal == sname, sname, partner)) %>%
     mutate(partner2  = if_else(focal == sname, partner, sname)) %>%
     left_join(dplyr::select(family_members_long, sname2 = sname, partner2 = partner, role), by = c("sname2", "partner2")) %>%
-    select(-sname2, -partner2) %>%
-    View()
+    select(-sname2, -partner2)
+
+
 
   # Reciprocity is the mean of interaction asymmetry for the top three partners
   if (directional) {
