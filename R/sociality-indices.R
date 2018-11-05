@@ -29,16 +29,7 @@ get_interaction_dates <- function(my_sub, members_l, df, my_sex_var, my_role, my
 
   # Remove all rows for dates when the particular animal wasn't present in grp
   remove_rows <- groom_dates %>%
-
-    dplyr::anti_join(members_l, by = c("sname", "grp", "date"))
-
-  # Take set difference and calculate summary
-  groom_dates <- groom_dates %>%
-    dplyr::setdiff(remove_rows) %>%
-    dplyr::select(sname, grp, date, iid)
-  #
-
-    dplyr::anti_join(members_l, by = c("sname", "age_group", "grp", "date"))
+        dplyr::anti_join(members_l, by = c("sname", "age_group", "grp", "date"))
 
   # Take set difference and calculate summary
   groom_dates <- groom_dates %>%
