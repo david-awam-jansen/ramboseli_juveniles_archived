@@ -331,7 +331,7 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
     unnest() %>%
     mutate(focal = (sname == sname1 & grp == grp1 & age_group == age_group1)) %>%
     filter(focal) %>%
-    select(sname, grp, start, end, contains("SCI_"))
+    select(sname, grp, start, end, age_group, contains("SCI_"))
 
   res <- left_join(my_iyol, sci_focal, by = c("sname", "grp", "start", "end", "age_group"))
 
@@ -343,6 +343,8 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
 
   return(res)
 }
+
+
 
 
 #' Calculate dyadic index variables from individual-year-of-life data
