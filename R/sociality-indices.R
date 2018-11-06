@@ -329,11 +329,11 @@ sci <- function(my_iyol, members_l, focals_l, females_l, interactions_l,
 
   sci_focal <- my_iyol %>%
     unnest() %>%
-    mutate(focal = (sname == sname1 & grp == grp1)) %>%
+    mutate(focal = (sname == sname1 & grp == grp1 & age_group = age_group1)) %>%
     filter(focal) %>%
     select(sname, grp, start, end, contains("SCI_"))
 
-  res <- left_join(my_iyol, sci_focal, by = c("sname", "grp", "start", "end"))
+  res <- left_join(my_iyol, sci_focal, by = c("sname", "grp", "start", "end", "age_group"))
 
   attr(res, "directional") <- directional
 
