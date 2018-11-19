@@ -596,7 +596,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   # Remove male-male dyads for grooming
   if (interactions_l$act[[1]] == "G") {
     my_subset <- my_subset %>%
-      dplyr::filter(!(sname_sex == "M" & partner_sex == "M" & age_group == "Adult" & partner_age_group == "adult"))
+      dplyr::filter(!(sname_sex == "M" & partner_sex == "M" & age_group == "adult" & partner_age_group == "adult"))
   }
 
   ## Co-residence dates
@@ -844,7 +844,7 @@ dyadic_index_summary <- function(df) {
   df$di_sum <- list(NULL)
   pb <- txtProgressBar(min = 0, max = nrow(df), style = 3) # Progress bar
   for (i in 1:nrow(df)) {
-    df[i, ]$di_sum <- list(dyadic_row_summary(df$di[[i]], df$sname[[i]], directional))
+    df[i, ]$di_sum <- list(dyadic_row_summary(df$di[[i]], df$sname[[i]], directional=FALSE))
     setTxtProgressBar(pb, i)
   }
   close(pb)
@@ -956,7 +956,7 @@ dyadic_index_summary <- function(df) {
     di_strength <- di_strength %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "DSI_M",  # check
-        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F",
+        SCI_class == "AM" & dyad_type == "AFandJ-AM" ~ "DSI_F",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "DSI_M",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F")) %>%# ,
     #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
@@ -969,7 +969,7 @@ dyadic_index_summary <- function(df) {
     di_strength_mom_excluded <- di_strength_mom_excluded %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "DSI_M_check",  # check
-        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "DSI_F_mom_excluded",
+        SCI_class == "AM" & dyad_type == "AFandJ-AM" ~ "DSI_F_mom_excluded",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "DSI_M_check",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "DSI_F_mom_excluded")) %>%#
         #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
@@ -992,7 +992,7 @@ dyadic_index_summary <- function(df) {
       tidyr::unnest() %>%
       dplyr::mutate(DSI_type = case_when(
         SCI_class == "AM" & dyad_type == "AM-AM" ~ "M",  # check
-        SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "F",
+        SCI_class == "AM" & dyad_type == "AFandJ-AM" ~ "F",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "M",
         SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "F")) %>%
       dplyr::select(-dyad_type) %>%
@@ -1006,7 +1006,7 @@ dyadic_index_summary <- function(df) {
      di_recip <- di_recip %>%
        dplyr::mutate(DSI_type = case_when(
          SCI_class == "AM" & dyad_type == "AM-AM" ~ "recip_M",  # check
-         SCI_class == "AM" & dyad_type == "AM-AFandJ" ~ "recip_F",
+         SCI_class == "AM" & dyad_type == "AFandJ-AM" ~ "recip_F",
          SCI_class == "AFandJ" & dyad_type == "AFandJ-AM" ~ "recip_M",
          SCI_class == "AFandJ" & dyad_type == "AFandJ-AFandJ" ~ "recip_F")) %>% # ,
        #     sex = forcats::fct_recode(sex, Male = "M", Female = "F"))
