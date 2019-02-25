@@ -588,6 +588,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
     dplyr::rowwise() %>%
     unite(temp1, sname, age_group, remove = FALSE) %>%
     unite(temp2, partner, partner_age_group, remove = FALSE)  %>%
+    dplyr::rowwise() %>%
     dplyr::mutate(tmp = paste(grp, sort(c(temp1, temp2)), collapse = ' ')) %>%
     dplyr::distinct(tmp, .keep_all = TRUE) %>%
     dplyr::select(-tmp, -temp1, -temp2) %>%
