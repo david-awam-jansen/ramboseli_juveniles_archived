@@ -593,6 +593,8 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
     dplyr::distinct(tmp, .keep_all = TRUE) %>%
     dplyr::select(-tmp, -temp1, -temp2) %>%
     dplyr::ungroup()
+  
+  message("Do I get pasted here?")
 
   # Remove male-male dyads for grooming
   if (interactions_l$act[[1]] == "G") {
