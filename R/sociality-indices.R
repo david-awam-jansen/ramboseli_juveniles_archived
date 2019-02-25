@@ -422,6 +422,7 @@ dyadic_index <- function(my_iyol, biograph_l, members_l, focals_l, females_l, in
                                                     members_l, focals_l, females_l,
                                                     interactions_l, min_cores_days,
                                                     within_grp, directional))
+      message("Step 1")
       setTxtProgressBar(pb, i)
     }
     close(pb)
@@ -518,6 +519,8 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   my_sname <- df$sname
   my_start <- df$start
   my_end <- df$end
+  
+  message("Step 2")
 
   # Put some subsets in environment for faster performance
   if (within_grp) {
@@ -560,6 +563,8 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
                        start = min(date),
                        end = max(date))
 
+    message("Step 3")
+    
     ## We only need juvenile data for the focal if its juvenile
     my_subset <- my_subset %>% mutate(focal = sname == my_focal & grp == grp) %>%
       filter(focal == TRUE | age_group == "adult")
@@ -569,6 +574,8 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
   dyads <- my_subset %>%
     dplyr::mutate(partner = list(my_subset$sname[my_subset$sname != sname])) %>%
     tidyr::unnest()
+  
+  message("Step 4 dyads")
 
   # Get sex and grp of partner
   # Remove dyads not in same groups
@@ -578,7 +585,8 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
                                     partner_age_group = age_group),
                       by = "partner") %>%
     dplyr::filter(grp == partner_grp)
-
+  
+  message("Step 5 dyads")
 
   # Note that the step above created duplicated dyads
   # e.g., sname A and partner B, sname B and partner A
@@ -594,6 +602,7 @@ get_dyadic_subset <- function(df, biograph_l, members_l, focals_l, females_l,
     dplyr::select(-tmp, -temp1, -temp2) %>%
     dplyr::ungroup()
   
+  message("Step 6 dyads")
   message("Do I get pasted here?")
 
   # Remove male-male dyads for grooming
